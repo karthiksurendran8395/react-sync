@@ -1,5 +1,4 @@
 // --- Global Variables & DOM References ---
-// Use const for elements that shouldn't be reassigned
 const statusElement = document.getElementById('status');
 const loadBtn = document.getElementById('loadVideosBtn');
 const videoId1Input = document.getElementById('videoId1');
@@ -8,14 +7,14 @@ const toggleViewBtn = document.getElementById('toggleViewBtn');
 const mainContainer = document.querySelector('.main-container');
 const syncToggleCheckbox = document.getElementById('syncToggleCheckbox');
 
-// Player instances - use let as they are reassigned
+// Player instances
 let player1 = null;
 let player2 = null;
 let playersReady = 0;
-let isSyncing = false; // Internal flag to prevent event loops
+let isSyncing = false; // Internal flag for preventing event loops
 
 // --- Sync State Variables ---
-let isSyncGloballyEnabled = true; // Master switch for sync controls, default ON
+let isSyncGloballyEnabled = true; // Master switch for sync controls
 let syncOffsetSeconds = 0; // Stores the time difference (P2 time - P1 time)
 let syncInterval = null;
 const SYNC_THRESHOLD_DRIFT = 1.0;
@@ -54,34 +53,27 @@ window.onYouTubeIframeAPIReady = function() {
 // Load Videos Function
 function loadVideos() {
     console.log("loadVideos function called.");
-    // Check required elements exist
     if (!videoId1Input || !videoId2Input || !statusElement || !loadBtn || !syncToggleCheckbox) {
         console.error("Required elements missing for loadVideos.");
         if (statusElement) statusElement.textContent = "Error: UI elements missing.";
         return;
     }
 
-    const input1 = videoId1Input.value;
-    const input2 = videoId2Input.value;
-    const videoId1 = extractVideoId(input1);
-    const videoId2 = extractVideoId(input2);
-
+    const videoId1 = extractVideoId(videoId1Input.value);
+    const videoId2 = extractVideoId(videoId2Input.value);
     let errorMessages = [];
     if (!videoId1) errorMessages.push('Invalid URL or ID for Left Video.');
     if (!videoId2) errorMessages.push('Invalid URL or ID for Right Video.');
-
     if (errorMessages.length > 0) {
         statusElement.textContent = errorMessages.join(' ');
-        videoId1Input.focus();
-        console.log("Video ID validation failed:", errorMessages);
-        return;
+        videoId1Input.focus(); return;
     }
 
     console.log("Loading videos with IDs:", videoId1, videoId2);
     statusElement.textContent = 'Loading videos...';
     loadBtn.disabled = true;
 
-    // --- Reset State ---
+    // Reset State
     playersReady = 0;
     isSyncing = false;
     if (syncTimeout) clearTimeout(syncTimeout);
@@ -89,15 +81,13 @@ function loadVideos() {
     stopSyncTimer();
     destroyPlayers();
     isSyncGloballyEnabled = true;
-    syncOffsetSeconds = 0; // Reset offset on load
-    syncToggleCheckbox.checked = true;
+    syncOffsetSeconds = 0; // Reset offset
+    syncToggleCheckbox.checked = true; // Reset UI
     console.log("State reset for load: Global Sync ON, Offset 0s");
 
-    // --- Create New Players ---
+    // Create New Players
     try {
-        console.log("Creating Player 1");
         player1 = new YT.Player('player1', { height: '360', width: '640', videoId: videoId1, playerVars: { 'playsinline': 1, 'enablejsapi': 1 }, events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange } });
-        console.log("Creating Player 2");
         player2 = new YT.Player('player2', { height: '360', width: '640', videoId: videoId2, playerVars: { 'playsinline': 1, 'enablejsapi': 1 }, events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange } });
     } catch (error) {
         console.error("Error creating YouTube players:", error);
@@ -112,10 +102,8 @@ function destroyPlayers() {
     if (syncTimeout) clearTimeout(syncTimeout);
     syncTimeout = null;
     isSyncing = false;
-
-    if (player1 && typeof player1.destroy === 'function') { try { player1.destroy(); console.log("Player 1 destroyed."); } catch (e) { console.warn("Error destroying player1:", e); } player1 = null; }
-    if (player2 && typeof player2.destroy === 'function') { try { player2.destroy(); console.log("Player 2 destroyed."); } catch (e) { console.warn("Error destroying player2:", e); } player2 = null; }
-
+    if (player1 && typeof player1.destroy === 'function') { try { player1.destroy(); } catch (e) {} player1 = null; }
+    if (player2 && typeof player2.destroy === 'function') { try { player2.destroy(); } catch (e) {} player2 = null; }
     const p1Element = document.getElementById('player1');
     const p2Element = document.getElementById('player2');
     if (p1Element) p1Element.innerHTML = '';
@@ -129,7 +117,7 @@ function onPlayerReady(event) {
     console.log(`${playerName} is Ready. Total ready: ${playersReady}`);
 
     if (playersReady === 2) {
-        if (statusElement) statusElement.textContent = 'Players Ready.'; // Initial message
+        if (statusElement) statusElement.textContent = 'Players Ready.'; // Initial message before offset calc/display
         updateSyncStatusMessage(); // Update based on checkbox state & offset
         if (loadBtn) {
             loadBtn.disabled = false;
@@ -142,13 +130,15 @@ function onPlayerReady(event) {
 
 // Player State Change Handler
 function onPlayerStateChange(event) {
+    // Exit if global sync is off
     if (!isSyncGloballyEnabled) {
         const newState = event.data;
         if (newState === YT.PlayerState.PAUSED || newState === YT.PlayerState.ENDED || newState === YT.PlayerState.BUFFERING) {
-             stopSyncTimer();
+             stopSyncTimer(); // Stop drift if user pauses manually while sync disabled
         }
-        return; // >>> EXIT if global sync is off
+        return;
     }
+    // Exit if internally syncing, players not ready, or players invalid
     if (isSyncing || playersReady < 2 || !player1 || !player2) { return; }
 
     const sourcePlayer = event.target;
@@ -163,13 +153,12 @@ function onPlayerStateChange(event) {
         sourceTime = sourcePlayer.getCurrentTime();
         console.log(`State Change (Sync ON): ${getPlayerStateName(newState)} @ ${sourceTime.toFixed(2)}s`);
     } catch(e) {
-        console.warn(`Error getting state (${event.data}) or time:`, e); return;
+        console.warn(`Error getting state or time:`, e); return;
     }
 
-    setSyncing(true); // ----- LOCK -----
-    // Pass the current offset to the sync function
-    syncTargetPlayer(targetPlayer, sourcePlayer, newState, sourceTime, syncOffsetSeconds);
-    clearSyncingTimeout(250); // ----- UNLOCK after delay -----
+    setSyncing(true); // LOCK
+    syncTargetPlayer(targetPlayer, sourcePlayer, newState, sourceTime, syncOffsetSeconds); // Pass offset
+    clearSyncingTimeout(250); // UNLOCK after delay
 }
 
 // Helper to get state name
@@ -185,33 +174,23 @@ function syncTargetPlayer(targetPlayer, sourcePlayer, sourceState, sourceTime, o
     try { targetState = targetPlayer.getPlayerState(); }
     catch(e) { console.warn("Sync aborted: Error getting target player state:", e); return; }
     const targetName = targetPlayer === player1 ? "P1" : "P2";
-    let targetSeekTime; // Calculated target time based on offset
+    let targetSeekTime; // Calculated target time
 
     try {
         switch (sourceState) {
-            case YT.PlayerState.PLAYING: // 1
+            case YT.PlayerState.PLAYING:
                 let currentTargetTime = 0; try { currentTargetTime = targetPlayer.getCurrentTime(); } catch (e) {}
-                if (sourcePlayer === player1) { targetSeekTime = sourceTime + offset; }
-                else { targetSeekTime = sourceTime - offset; }
+                if (sourcePlayer === player1) { targetSeekTime = sourceTime + offset; } else { targetSeekTime = sourceTime - offset; }
                 const timeDiffPlaying = Math.abs(currentTargetTime - targetSeekTime);
-
-                if (timeDiffPlaying > SYNC_THRESHOLD_SEEK) {
-                    targetPlayer.seekTo(targetSeekTime, true);
-                }
-                if (targetState !== YT.PlayerState.PLAYING && targetState !== YT.PlayerState.BUFFERING) {
-                    targetPlayer.playVideo();
-                }
+                if (timeDiffPlaying > SYNC_THRESHOLD_SEEK) { targetPlayer.seekTo(targetSeekTime, true); }
+                if (targetState !== YT.PlayerState.PLAYING && targetState !== YT.PlayerState.BUFFERING) { targetPlayer.playVideo(); }
                 startSyncTimer();
                 break;
 
-            case YT.PlayerState.PAUSED: // 2
+            case YT.PlayerState.PAUSED:
                 stopSyncTimer();
-                if (targetState !== YT.PlayerState.PAUSED) {
-                    targetPlayer.pauseVideo();
-                }
-                if (sourcePlayer === player1) { targetSeekTime = sourceTime + offset; }
-                else { targetSeekTime = sourceTime - offset; }
-
+                if (targetState !== YT.PlayerState.PAUSED) { targetPlayer.pauseVideo(); }
+                if (sourcePlayer === player1) { targetSeekTime = sourceTime + offset; } else { targetSeekTime = sourceTime - offset; }
                 setTimeout(() => {
                     if (playersReady === 2 && targetPlayer && typeof targetPlayer.seekTo === 'function') {
                         try { if(targetPlayer.getPlayerState() === YT.PlayerState.PAUSED){ targetPlayer.seekTo(targetSeekTime, true); } }
@@ -220,52 +199,46 @@ function syncTargetPlayer(targetPlayer, sourcePlayer, sourceState, sourceTime, o
                 }, 150);
                 break;
 
-            case YT.PlayerState.BUFFERING: // 3
+            case YT.PlayerState.BUFFERING:
                 stopSyncTimer();
                 if (targetState === YT.PlayerState.PLAYING) { targetPlayer.pauseVideo(); }
                 break;
 
-            case YT.PlayerState.ENDED: // 0
+            case YT.PlayerState.ENDED:
                 stopSyncTimer();
-                 if (targetState !== YT.PlayerState.PAUSED && targetState !== YT.PlayerState.ENDED) { targetPlayer.pauseVideo(); }
-                if (sourcePlayer === player1) { targetSeekTime = sourceTime + offset; }
-                else { targetSeekTime = sourceTime - offset; }
+                if (targetState !== YT.PlayerState.PAUSED && targetState !== YT.PlayerState.ENDED) { targetPlayer.pauseVideo(); }
+                if (sourcePlayer === player1) { targetSeekTime = sourceTime + offset; } else { targetSeekTime = sourceTime - offset; }
                 try { targetPlayer.seekTo(targetSeekTime, true); }
                 catch(e) { console.warn(`Error seeking ${targetName} on ENDED state:`, e); }
                 break;
 
-             case YT.PlayerState.CUED: // 5
+             case YT.PlayerState.CUED:
                  stopSyncTimer();
-                  if (targetState === YT.PlayerState.PLAYING) { targetPlayer.pauseVideo(); }
+                 if (targetState === YT.PlayerState.PLAYING) { targetPlayer.pauseVideo(); }
                  break;
         }
     } catch (error) {
-        console.error(`Error during syncTargetPlayer action for ${targetName} (source state ${sourceState}):`, error);
+        console.error(`Error during syncTargetPlayer action:`, error);
         stopSyncTimer();
     }
 }
 
 // --- Sync Timer Logic (Drift Check - Handles Offset) ---
 function startSyncTimer() {
-    if (!isSyncGloballyEnabled || syncInterval) { return; } // Don't start if disabled or running
-    stopSyncTimer();
-    // console.log("Starting sync timer (drift check)");
+    if (!isSyncGloballyEnabled || syncInterval) { return; } // Exit if disabled or already running
+    stopSyncTimer(); // Clear any existing timer first
     syncInterval = setInterval(checkAndSyncTime, SYNC_INTERVAL_MS);
 }
 
 function stopSyncTimer() {
-    if (syncInterval) {
-        // console.log("Stopping sync timer (drift check)");
-        clearInterval(syncInterval);
-        syncInterval = null;
-    }
+    if (syncInterval) { clearInterval(syncInterval); syncInterval = null; }
 }
 
 function checkAndSyncTime() {
     if (!isSyncGloballyEnabled) { stopSyncTimer(); return; } // Stop if disabled
     if (isSyncing || playersReady < 2 || !player1 || !player2 ||
          typeof player1.getPlayerState !== 'function' || typeof player2.getPlayerState !== 'function') {
-        return;
+        return; // Exit if busy, not ready, or players invalid
     }
 
     try {
@@ -274,25 +247,25 @@ function checkAndSyncTime() {
         if (state1 === YT.PlayerState.PLAYING && state2 === YT.PlayerState.PLAYING) {
             const time1 = player1.getCurrentTime();
             const time2 = player2.getCurrentTime();
-            const expectedTime2 = time1 + syncOffsetSeconds; // Expected P2 time
+            const expectedTime2 = time1 + syncOffsetSeconds; // Calculate expected P2 time
             const diff = Math.abs(time2 - expectedTime2); // Compare actual P2 time to expected
 
             if (diff > SYNC_THRESHOLD_DRIFT) {
-                console.log(`Drift Check: P1=${time1.toFixed(2)}, P2=${time2.toFixed(2)}, Offset=${syncOffsetSeconds.toFixed(2)}, ExpectedP2=${expectedTime2.toFixed(2)}. Diff=${diff.toFixed(2)} > ${SYNC_THRESHOLD_DRIFT}. Syncing P2->Expected.`);
-                setSyncing(true); // ----- LOCK -----
+                console.log(`Drift Check: Diff=${diff.toFixed(2)} > ${SYNC_THRESHOLD_DRIFT}. Syncing P2->Expected.`);
+                setSyncing(true); // LOCK
                 player2.seekTo(expectedTime2, true); // Seek P2 to expected offset time
-                clearSyncingTimeout(150); // ----- UNLOCK after short delay -----
+                clearSyncingTimeout(150); // UNLOCK
             }
         } else {
-            stopSyncTimer(); // Stop if not both playing
+            stopSyncTimer(); // Stop drift timer if players aren't both playing
         }
     } catch (e) {
         console.warn("Error during sync check (drift):", e);
-        stopSyncTimer();
+        stopSyncTimer(); // Stop timer on error
     }
 }
 
-// --- Helper functions for isSyncing flag --- (Internal sync lock)
+// --- Helper functions for isSyncing flag (Internal sync lock) ---
 function setSyncing(status) {
     isSyncing = status;
     if (status && syncTimeout) { clearTimeout(syncTimeout); syncTimeout = null; }
@@ -311,9 +284,8 @@ function updateSyncStatusMessage() {
 
     if (isSyncGloballyEnabled) {
         let offsetMsg = "";
-        // Only show offset if it's meaningfully different from zero
-        if (Math.abs(syncOffsetSeconds) > 0.1) {
-           const sign = syncOffsetSeconds > 0 ? "+" : ""; // Add plus sign for positive offsets
+        if (Math.abs(syncOffsetSeconds) > 0.1) { // Show offset if significant
+           const sign = syncOffsetSeconds > 0 ? "+" : "";
            offsetMsg = ` (Offset: P2 ${sign}${syncOffsetSeconds.toFixed(2)}s)`;
         }
         statusElement.textContent = `Sync Enabled: Playback controls linked.${offsetMsg}`;
@@ -324,22 +296,19 @@ function updateSyncStatusMessage() {
 
 // Setup ALL button/control listeners
 function setupButtonListeners() {
-    // --- Setup Load Button Listener ---
+    // Load Button Listener
     if (loadBtn) {
         loadBtn.onclick = loadVideos;
-        console.log("Load Videos button listener attached.");
-    } else {
-        console.error("Load Videos button not found during listener setup!");
-    }
+        console.log("Load Videos listener attached.");
+    } else { console.error("Load Videos button not found!"); }
 
-    // --- Setup Toggle View Button Listener ---
+    // Toggle View Button Listener
     if (toggleViewBtn && mainContainer) {
          toggleViewBtn.onclick = () => {
             console.log("Toggle view button clicked.");
             mainContainer.classList.toggle('controls-hidden');
             document.body.classList.toggle('fullscreen-active');
             const isHidden = mainContainer.classList.contains('controls-hidden');
-            // Update button text/icon/aria state
             if (isHidden) {
                 toggleViewBtn.innerHTML = '<i class="fas fa-eye"></i> Show Controls';
                 toggleViewBtn.title = "Show Controls View";
@@ -349,14 +318,11 @@ function setupButtonListeners() {
                 toggleViewBtn.title = "Hide Controls View";
                 toggleViewBtn.setAttribute('aria-pressed', 'false');
             }
-            console.log("Fullscreen active:", document.body.classList.contains('fullscreen-active'));
         };
-        console.log("Toggle view button listener attached.");
-    } else {
-        console.warn("Toggle view button or main container not found during listener setup.");
-    }
+        console.log("Toggle view listener attached.");
+    } else { console.warn("Toggle view button or main container not found."); }
 
-    // --- Setup Sync Toggle Checkbox Listener ---
+    // Sync Toggle Checkbox Listener
     if (syncToggleCheckbox) {
         syncToggleCheckbox.onchange = () => {
             isSyncGloballyEnabled = syncToggleCheckbox.checked;
@@ -375,7 +341,6 @@ function setupButtonListeners() {
                          const time1 = player1.getCurrentTime();
                          const time2 = player2.getCurrentTime();
                          syncOffsetSeconds = time2 - time1; // Calculate and store offset (P2 - P1)
-                         console.log(`  - P1 Time: ${time1.toFixed(2)}, P2 Time: ${time2.toFixed(2)}`);
                          console.log(`  - Calculated Offset (P2 - P1): ${syncOffsetSeconds.toFixed(2)}s`);
 
                          // Restart drift timer ONLY if both players are currently playing
@@ -389,37 +354,31 @@ function setupButtonListeners() {
                      } catch (e) {
                          console.warn("Error calculating offset on re-enable:", e);
                          syncOffsetSeconds = 0; // Reset offset on error
-                         stopSyncTimer(); // Stop timer on error
+                         stopSyncTimer();
                      }
                 } else {
                     console.log("  - Could not calculate offset (players not ready/valid). Offset remains 0.");
                     syncOffsetSeconds = 0; // Ensure offset is 0 if calculation fails
-                    stopSyncTimer(); // Ensure timer is stopped if we can't calculate offset
+                    stopSyncTimer();
                 }
             }
-            updateSyncStatusMessage(); // Update the status text reflecting new state/offset
+            updateSyncStatusMessage(); // Update the status text
         };
-         console.log("Sync toggle listener attached.");
-    } else {
-         console.warn("Sync toggle checkbox not found during listener setup.");
-    }
+        console.log("Sync toggle listener attached.");
+    } else { console.warn("Sync toggle checkbox not found."); }
 }
-
 
 // --- Initial Setup ---
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM Content Loaded. Setting up initial state and listeners.");
-
-    // Initial button states
+    // Initial button/control states
     if (loadBtn) { loadBtn.disabled = true; }
-    // Initial view states
     if (mainContainer) mainContainer.classList.remove('controls-hidden');
-     document.body.classList.remove('fullscreen-active');
-     if (toggleViewBtn) toggleViewBtn.setAttribute('aria-pressed', 'false');
-    // Initial sync states
-    isSyncGloballyEnabled = true;
-    syncOffsetSeconds = 0; // Ensure offset is 0 initially
-    if (syncToggleCheckbox) { syncToggleCheckbox.checked = true; }
+    document.body.classList.remove('fullscreen-active');
+    if (toggleViewBtn) toggleViewBtn.setAttribute('aria-pressed', 'false');
+    isSyncGloballyEnabled = true; // Default sync state
+    syncOffsetSeconds = 0; // Default offset
+    if (syncToggleCheckbox) { syncToggleCheckbox.checked = true; } // Match UI to state
 
     // Setup listeners AFTER setting initial states
     setupButtonListeners();

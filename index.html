@@ -21,8 +21,16 @@
 
         <!-- Toggle View Button -->
         <button id="toggleViewBtn" title="Toggle Controls View" aria-pressed="false">
-             <i class="fas fa-eye-slash"></i> Hide Controls <!-- Initial state -->
+             <i class="fas fa-eye-slash"></i> Hide Controls
         </button>
+
+        <!-- MOVED: Sync Toggle Checkbox Container -->
+        <div id="syncToggleContainer">
+            <div class="sync-toggle-group">
+                 <input type="checkbox" id="syncToggleCheckbox" checked>
+                 <label for="syncToggleCheckbox">Sync Enabled</label>
+            </div>
+        </div>
 
         <section class="controls-section">
             <!-- Video ID Input Groups -->
@@ -38,13 +46,7 @@
             <!-- Load Button -->
             <button id="loadVideosBtn">Load Videos</button>
 
-            <!-- Sync Toggle Checkbox -->
-            <div class="sync-toggle-group">
-                 <input type="checkbox" id="syncToggleCheckbox" checked>
-                 <label for="syncToggleCheckbox">Enable Playback Sync</label>
-            </div>
-
-            <!-- Input Hint -->
+            <!-- Input Hint (No toggle here anymore) -->
             <p class="input-hint">Enter a YouTube Video URL or just the Video ID.</p>
         </section>
 
