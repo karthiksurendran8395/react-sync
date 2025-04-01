@@ -1,36 +1,36 @@
 // --- Global Variables & DOM References ---
-// Ensure elements exist before assigning potentially null values
+// Use const for elements that shouldn't be reassigned
 const statusElement = document.getElementById('status');
 const loadBtn = document.getElementById('loadVideosBtn');
 const videoId1Input = document.getElementById('videoId1');
 const videoId2Input = document.getElementById('videoId2');
 const toggleViewBtn = document.getElementById('toggleViewBtn');
 const mainContainer = document.querySelector('.main-container');
+const syncToggleCheckbox = document.getElementById('syncToggleCheckbox');
 
-// Player instances
+// Player instances - use let as they are reassigned
 let player1 = null;
 let player2 = null;
-let playersReady = 0; // Counter for ready players
-let isSyncing = false; // Flag to prevent event loops/re-entrancy
+let playersReady = 0;
+let isSyncing = false; // Internal flag to prevent event loops
 
 // --- Sync State Variables ---
-let syncInterval = null; // Interval timer for periodic drift checks
-const SYNC_THRESHOLD_DRIFT = 1.0; // Max allowed time difference (seconds) for background drift correction
-const SYNC_THRESHOLD_SEEK = 0.5; // Max allowed time diff (seconds) in PLAYING handler before forcing a seek
-const SYNC_INTERVAL_MS = 1500; // How often (ms) to check for drift
-let syncTimeout = null; // Timeout handle for resetting the isSyncing flag
+let isSyncGloballyEnabled = true; // Master switch for sync controls, default ON
+let syncOffsetSeconds = 0; // Stores the time difference (P2 time - P1 time)
+let syncInterval = null;
+const SYNC_THRESHOLD_DRIFT = 1.0;
+const SYNC_THRESHOLD_SEEK = 0.5;
+const SYNC_INTERVAL_MS = 1500;
+let syncTimeout = null;
 
 
 // --- Helper function to extract Video ID ---
 function extractVideoId(input) {
     if (!input) return null;
     input = input.trim();
-    // Regex covers: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID
-    // Also handles parameters like ?t= or ?si=
     const urlRegex = /(?:watch\?v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/;
     const match = input.match(urlRegex);
     if (match && match[1]) { return match[1]; }
-    // Check if input itself is a valid ID format
     const plainIdRegex = /^[a-zA-Z0-9_-]{11}$/;
     if (plainIdRegex.test(input)) { return input; }
     console.warn(`Could not extract valid video ID from input: "${input}"`);
@@ -38,11 +38,9 @@ function extractVideoId(input) {
 }
 
 // --- YouTube IFrame API Setup ---
-// This function is called automatically by the YouTube API script
 window.onYouTubeIframeAPIReady = function() {
     console.log("YouTube IFrame API Ready");
     if (statusElement) statusElement.textContent = 'API Loaded. Enter Video URLs/IDs and click "Load Videos".';
-    // Enable the load button ONLY if it exists
     if (loadBtn) {
         loadBtn.disabled = false;
         console.log("Load Videos button enabled.");
@@ -56,7 +54,8 @@ window.onYouTubeIframeAPIReady = function() {
 // Load Videos Function
 function loadVideos() {
     console.log("loadVideos function called.");
-    if (!videoId1Input || !videoId2Input || !statusElement || !loadBtn) {
+    // Check required elements exist
+    if (!videoId1Input || !videoId2Input || !statusElement || !loadBtn || !syncToggleCheckbox) {
         console.error("Required elements missing for loadVideos.");
         if (statusElement) statusElement.textContent = "Error: UI elements missing.";
         return;
@@ -75,12 +74,12 @@ function loadVideos() {
         statusElement.textContent = errorMessages.join(' ');
         videoId1Input.focus();
         console.log("Video ID validation failed:", errorMessages);
-        return; // Stop if IDs are invalid
+        return;
     }
 
     console.log("Loading videos with IDs:", videoId1, videoId2);
     statusElement.textContent = 'Loading videos...';
-    loadBtn.disabled = true; // Disable load button while loading
+    loadBtn.disabled = true;
 
     // --- Reset State ---
     playersReady = 0;
@@ -88,27 +87,21 @@ function loadVideos() {
     if (syncTimeout) clearTimeout(syncTimeout);
     syncTimeout = null;
     stopSyncTimer();
-    destroyPlayers(); // Destroy previous players before creating new ones
+    destroyPlayers();
+    isSyncGloballyEnabled = true;
+    syncOffsetSeconds = 0; // Reset offset on load
+    syncToggleCheckbox.checked = true;
+    console.log("State reset for load: Global Sync ON, Offset 0s");
 
     // --- Create New Players ---
     try {
         console.log("Creating Player 1");
-        player1 = new YT.Player('player1', {
-            height: '360', width: '640', videoId: videoId1,
-            playerVars: { 'playsinline': 1, 'enablejsapi': 1 },
-            events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange }
-        });
-
+        player1 = new YT.Player('player1', { height: '360', width: '640', videoId: videoId1, playerVars: { 'playsinline': 1, 'enablejsapi': 1 }, events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange } });
         console.log("Creating Player 2");
-        player2 = new YT.Player('player2', {
-            height: '360', width: '640', videoId: videoId2,
-            playerVars: { 'playsinline': 1, 'enablejsapi': 1 },
-            events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange }
-        });
+        player2 = new YT.Player('player2', { height: '360', width: '640', videoId: videoId2, playerVars: { 'playsinline': 1, 'enablejsapi': 1 }, events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange } });
     } catch (error) {
         console.error("Error creating YouTube players:", error);
         if (statusElement) statusElement.textContent = "Error loading players. Check console.";
-        // Keep loadBtn disabled if player creation failed
     }
 }
 
@@ -120,20 +113,9 @@ function destroyPlayers() {
     syncTimeout = null;
     isSyncing = false;
 
-    // Destroy Player 1
-    if (player1 && typeof player1.destroy === 'function') {
-        try { player1.destroy(); console.log("Player 1 destroyed."); }
-        catch (e) { console.warn("Error destroying player1:", e); }
-        player1 = null;
-    }
-    // Destroy Player 2
-    if (player2 && typeof player2.destroy === 'function') {
-        try { player2.destroy(); console.log("Player 2 destroyed."); }
-        catch (e) { console.warn("Error destroying player2:", e); }
-        player2 = null;
-    }
+    if (player1 && typeof player1.destroy === 'function') { try { player1.destroy(); console.log("Player 1 destroyed."); } catch (e) { console.warn("Error destroying player1:", e); } player1 = null; }
+    if (player2 && typeof player2.destroy === 'function') { try { player2.destroy(); console.log("Player 2 destroyed."); } catch (e) { console.warn("Error destroying player2:", e); } player2 = null; }
 
-    // Ensure placeholders are cleared visually
     const p1Element = document.getElementById('player1');
     const p2Element = document.getElementById('player2');
     if (p1Element) p1Element.innerHTML = '';
@@ -147,8 +129,8 @@ function onPlayerReady(event) {
     console.log(`${playerName} is Ready. Total ready: ${playersReady}`);
 
     if (playersReady === 2) {
-        if (statusElement) statusElement.textContent = 'Players Ready. Controls are synced.';
-        // Re-enable load button only when BOTH players are fully ready
+        if (statusElement) statusElement.textContent = 'Players Ready.'; // Initial message
+        updateSyncStatusMessage(); // Update based on checkbox state & offset
         if (loadBtn) {
             loadBtn.disabled = false;
             console.log("Load button re-enabled (both players ready).");
@@ -160,167 +142,113 @@ function onPlayerReady(event) {
 
 // Player State Change Handler
 function onPlayerStateChange(event) {
-    // Ignore events if not fully ready, or if currently syncing
-    if (isSyncing || playersReady < 2 || !player1 || !player2) {
-        // console.log("State change ignored (syncing/not ready/players missing)");
-        return;
+    if (!isSyncGloballyEnabled) {
+        const newState = event.data;
+        if (newState === YT.PlayerState.PAUSED || newState === YT.PlayerState.ENDED || newState === YT.PlayerState.BUFFERING) {
+             stopSyncTimer();
+        }
+        return; // >>> EXIT if global sync is off
     }
+    if (isSyncing || playersReady < 2 || !player1 || !player2) { return; }
 
     const sourcePlayer = event.target;
     const targetPlayer = (sourcePlayer === player1) ? player2 : player1;
-    const sourceName = (sourcePlayer === player1) ? "P1" : "P2";
-
-    // Ensure target player still exists and is valid
     if (!targetPlayer || typeof targetPlayer.getPlayerState !== 'function') {
-        console.warn(`Target player for ${sourceName} state change not available.`);
-        return;
+        console.warn("Target player not available during state change."); return;
     }
 
-    let newState = -99; // Default invalid state
-    let sourceTime = 0;
-
+    let newState = -99, sourceTime = 0;
     try {
-        newState = event.data; // Get the new state code (e.g., 1 for PLAYING)
-        sourceTime = sourcePlayer.getCurrentTime(); // Get current time of the player that changed state
-        console.log(`State Change: ${sourceName} -> ${getPlayerStateName(newState)} @ ${sourceTime.toFixed(2)}s`);
+        newState = event.data;
+        sourceTime = sourcePlayer.getCurrentTime();
+        console.log(`State Change (Sync ON): ${getPlayerStateName(newState)} @ ${sourceTime.toFixed(2)}s`);
     } catch(e) {
-        console.warn(`Error getting state (${event.data}) or time from ${sourceName}:`, e);
-        return; // Don't sync if we can't get reliable info
+        console.warn(`Error getting state (${event.data}) or time:`, e); return;
     }
 
     setSyncing(true); // ----- LOCK -----
-    syncTargetPlayer(targetPlayer, sourcePlayer, newState, sourceTime);
+    // Pass the current offset to the sync function
+    syncTargetPlayer(targetPlayer, sourcePlayer, newState, sourceTime, syncOffsetSeconds);
     clearSyncingTimeout(250); // ----- UNLOCK after delay -----
 }
 
-// Helper to get state name (for logging)
+// Helper to get state name
 function getPlayerStateName(stateCode) {
-    for (const state in YT.PlayerState) {
-        if (YT.PlayerState[state] === stateCode) {
-            return state;
-        }
-    }
+    for (const state in YT.PlayerState) { if (YT.PlayerState[state] === stateCode) { return state; } }
     return `UNKNOWN (${stateCode})`;
 }
 
-
-// Core Synchronization Logic
-function syncTargetPlayer(targetPlayer, sourcePlayer, sourceState, sourceTime) {
-    // Double check players exist (might have been destroyed between event and execution)
-    if (!targetPlayer || typeof targetPlayer.getPlayerState !== 'function' || !sourcePlayer) {
-         console.warn("Sync aborted: Target or source player invalid in syncTargetPlayer.");
-         return;
-    }
-
+// Core Synchronization Logic (Handles Offset)
+function syncTargetPlayer(targetPlayer, sourcePlayer, sourceState, sourceTime, offset) {
+    if (!targetPlayer || typeof targetPlayer.getPlayerState !== 'function' || !sourcePlayer) { return; }
     let targetState = -99;
-    try {
-        targetState = targetPlayer.getPlayerState();
-    } catch(e) {
-        console.warn("Sync aborted: Error getting target player state:", e);
-        return; // Cannot sync if target state is unknown
-    }
-
+    try { targetState = targetPlayer.getPlayerState(); }
+    catch(e) { console.warn("Sync aborted: Error getting target player state:", e); return; }
     const targetName = targetPlayer === player1 ? "P1" : "P2";
-    // console.log(`SYNC ACTION for ${targetName}: Source State=${getPlayerStateName(sourceState)}, Target State=${getPlayerStateName(targetState)}`);
+    let targetSeekTime; // Calculated target time based on offset
 
-    try { // Wrap API calls in try-catch for safety
+    try {
         switch (sourceState) {
             case YT.PlayerState.PLAYING: // 1
-                let targetTime = 0;
-                try { targetTime = targetPlayer.getCurrentTime(); }
-                catch (e) { console.warn("Couldn't get target time, will seek/play anyway."); }
+                let currentTargetTime = 0; try { currentTargetTime = targetPlayer.getCurrentTime(); } catch (e) {}
+                if (sourcePlayer === player1) { targetSeekTime = sourceTime + offset; }
+                else { targetSeekTime = sourceTime - offset; }
+                const timeDiffPlaying = Math.abs(currentTargetTime - targetSeekTime);
 
-                const timeDiff = Math.abs(sourceTime - targetTime);
-                // console.log(` - PLAYING: Time diff = ${timeDiff.toFixed(2)}`);
-
-                // Seek only if difference is significant (user likely seeked source)
-                if (timeDiff > SYNC_THRESHOLD_SEEK) {
-                    // console.log(` - PLAYING: Seeking ${targetName} to ${sourceTime.toFixed(2)}`);
-                    targetPlayer.seekTo(sourceTime, true);
+                if (timeDiffPlaying > SYNC_THRESHOLD_SEEK) {
+                    targetPlayer.seekTo(targetSeekTime, true);
                 }
-                // Ensure target is playing if source is playing
                 if (targetState !== YT.PlayerState.PLAYING && targetState !== YT.PlayerState.BUFFERING) {
-                    // console.log(` - PLAYING: Calling playVideo() on ${targetName}`);
                     targetPlayer.playVideo();
                 }
-                startSyncTimer(); // Ensure drift check timer runs
+                startSyncTimer();
                 break;
 
             case YT.PlayerState.PAUSED: // 2
-                stopSyncTimer(); // Stop drift check when paused
-                // Pause the target player if it's not already paused
+                stopSyncTimer();
                 if (targetState !== YT.PlayerState.PAUSED) {
-                    // console.log(` - PAUSED: Calling pauseVideo() on ${targetName}`);
                     targetPlayer.pauseVideo();
                 }
-                // Seek slightly *after* the pause command for robustness
-                // This helps ensure the player is in a state where seekTo is reliable
+                if (sourcePlayer === player1) { targetSeekTime = sourceTime + offset; }
+                else { targetSeekTime = sourceTime - offset; }
+
                 setTimeout(() => {
-                    // Check again if players are still valid and ready before seeking
                     if (playersReady === 2 && targetPlayer && typeof targetPlayer.seekTo === 'function') {
-                        try {
-                            // Final check: Is target *actually* paused now?
-                            if(targetPlayer.getPlayerState() === YT.PlayerState.PAUSED){
-                                targetPlayer.seekTo(sourceTime, true);
-                                // console.log(` - PAUSED: Seek ${targetName} to ${sourceTime.toFixed(2)} (delayed)`);
-                            } else {
-                                // console.log(` - PAUSED: Skipped delayed seek as ${targetName} was not paused.`);
-                            }
-                        } catch (e) { console.warn(`Error seeking ${targetName} in pause timeout:`, e); }
+                        try { if(targetPlayer.getPlayerState() === YT.PlayerState.PAUSED){ targetPlayer.seekTo(targetSeekTime, true); } }
+                        catch (e) { console.warn(`Error seeking ${targetName} in pause timeout:`, e); }
                     }
-                }, 150); // Slightly longer delay might be safer
+                }, 150);
                 break;
 
             case YT.PlayerState.BUFFERING: // 3
-                stopSyncTimer(); // Buffering implies not playing steadily
-                // If target is playing, pause it to wait for source
-                if (targetState === YT.PlayerState.PLAYING) {
-                    // console.log(` - BUFFERING: Pausing ${targetName} while source buffers`);
-                    targetPlayer.pauseVideo();
-                    // Optional: seek target to match source time during buffer pause?
-                    // try { targetPlayer.seekTo(sourceTime, true); } catch(e){}
-                }
+                stopSyncTimer();
+                if (targetState === YT.PlayerState.PLAYING) { targetPlayer.pauseVideo(); }
                 break;
 
             case YT.PlayerState.ENDED: // 0
-                // console.log(` - ENDED: Pausing ${targetName} at ${sourceTime.toFixed(2)}`);
                 stopSyncTimer();
-                 // Ensure target is paused
-                 if (targetState !== YT.PlayerState.PAUSED && targetState !== YT.PlayerState.ENDED) {
-                     targetPlayer.pauseVideo();
-                 }
-                // Seek target to the end time (sourceTime should be video duration or close)
-                try { targetPlayer.seekTo(sourceTime, true); }
+                 if (targetState !== YT.PlayerState.PAUSED && targetState !== YT.PlayerState.ENDED) { targetPlayer.pauseVideo(); }
+                if (sourcePlayer === player1) { targetSeekTime = sourceTime + offset; }
+                else { targetSeekTime = sourceTime - offset; }
+                try { targetPlayer.seekTo(targetSeekTime, true); }
                 catch(e) { console.warn(`Error seeking ${targetName} on ENDED state:`, e); }
                 break;
 
              case YT.PlayerState.CUED: // 5
-                 // Usually happens after loading. Might pause the other player if it started playing?
                  stopSyncTimer();
-                  if (targetState === YT.PlayerState.PLAYING) {
-                     // console.log(` - CUED: Source cued, pausing ${targetName}`);
-                     targetPlayer.pauseVideo();
-                 }
-                 // Seek target to beginning? Generally handled by onReady/initial load.
-                 // try { targetPlayer.seekTo(0, true); } catch(e){}
+                  if (targetState === YT.PlayerState.PLAYING) { targetPlayer.pauseVideo(); }
                  break;
-
-            // case YT.PlayerState.UNSTARTED: // -1
-            //     // Usually no action needed here, handled by load.
-            //     break;
         }
     } catch (error) {
         console.error(`Error during syncTargetPlayer action for ${targetName} (source state ${sourceState}):`, error);
-        // Consider stopping timer or other recovery if errors persist
         stopSyncTimer();
     }
 }
 
-// --- Sync Timer Logic (Drift Check) ---
+// --- Sync Timer Logic (Drift Check - Handles Offset) ---
 function startSyncTimer() {
-    // Don't start if already running
-    if (syncInterval) return;
-    stopSyncTimer(); // Clear just in case
+    if (!isSyncGloballyEnabled || syncInterval) { return; } // Don't start if disabled or running
+    stopSyncTimer();
     // console.log("Starting sync timer (drift check)");
     syncInterval = setInterval(checkAndSyncTime, SYNC_INTERVAL_MS);
 }
@@ -334,8 +262,8 @@ function stopSyncTimer() {
 }
 
 function checkAndSyncTime() {
-    // Only run if not syncing, both players ready and valid
-     if (isSyncing || playersReady < 2 || !player1 || !player2 ||
+    if (!isSyncGloballyEnabled) { stopSyncTimer(); return; } // Stop if disabled
+    if (isSyncing || playersReady < 2 || !player1 || !player2 ||
          typeof player1.getPlayerState !== 'function' || typeof player2.getPlayerState !== 'function') {
         return;
     }
@@ -343,58 +271,60 @@ function checkAndSyncTime() {
     try {
         const state1 = player1.getPlayerState();
         const state2 = player2.getPlayerState();
-
-        // Only perform drift correction if BOTH players are actively PLAYING.
         if (state1 === YT.PlayerState.PLAYING && state2 === YT.PlayerState.PLAYING) {
             const time1 = player1.getCurrentTime();
             const time2 = player2.getCurrentTime();
-            const diff = Math.abs(time1 - time2);
+            const expectedTime2 = time1 + syncOffsetSeconds; // Expected P2 time
+            const diff = Math.abs(time2 - expectedTime2); // Compare actual P2 time to expected
 
-            // If drift exceeds threshold, sync Player 2 to Player 1
             if (diff > SYNC_THRESHOLD_DRIFT) {
-                console.log(`Drift Check: P1=${time1.toFixed(2)}, P2=${time2.toFixed(2)}. Diff=${diff.toFixed(2)} > ${SYNC_THRESHOLD_DRIFT}. Syncing P2->P1.`);
+                console.log(`Drift Check: P1=${time1.toFixed(2)}, P2=${time2.toFixed(2)}, Offset=${syncOffsetSeconds.toFixed(2)}, ExpectedP2=${expectedTime2.toFixed(2)}. Diff=${diff.toFixed(2)} > ${SYNC_THRESHOLD_DRIFT}. Syncing P2->Expected.`);
                 setSyncing(true); // ----- LOCK -----
-                player2.seekTo(time1, true);
+                player2.seekTo(expectedTime2, true); // Seek P2 to expected offset time
                 clearSyncingTimeout(150); // ----- UNLOCK after short delay -----
             }
         } else {
-            // If players are not both playing, the drift check timer isn't needed.
-            // console.log("Drift Check: Players not both playing, stopping timer.");
-             stopSyncTimer();
+            stopSyncTimer(); // Stop if not both playing
         }
     } catch (e) {
         console.warn("Error during sync check (drift):", e);
-        stopSyncTimer(); // Stop timer if players error out
+        stopSyncTimer();
     }
 }
 
-// --- Helper functions for isSyncing flag ---
+// --- Helper functions for isSyncing flag --- (Internal sync lock)
 function setSyncing(status) {
-    // const from = isSyncing; // For debugging complex issues
     isSyncing = status;
-    // console.log(`isSyncing: ${from} -> ${status}`);
-    // If we are starting to sync (true), clear any pending unlock timeout immediately
-    if (status && syncTimeout) {
-         clearTimeout(syncTimeout);
-         syncTimeout = null;
-    }
+    if (status && syncTimeout) { clearTimeout(syncTimeout); syncTimeout = null; }
 }
-
 function clearSyncingTimeout(delay = 250) {
-    // Clear any previous unlock timeout first
     if (syncTimeout) clearTimeout(syncTimeout);
-    // Set a new timeout to unlock (set isSyncing back to false)
-    syncTimeout = setTimeout(() => {
-        // console.log("Resetting isSyncing via timeout");
-        isSyncing = false;
-        syncTimeout = null; // Clear the handle reference
-    }, delay);
+    syncTimeout = setTimeout(() => { isSyncing = false; syncTimeout = null; }, delay);
 }
 
 // --- UI Interaction Logic ---
 
+// Update status message (Handles Offset Display)
+function updateSyncStatusMessage() {
+    if (!statusElement) return;
+    if (playersReady < 2) return; // Don't override loading messages
+
+    if (isSyncGloballyEnabled) {
+        let offsetMsg = "";
+        // Only show offset if it's meaningfully different from zero
+        if (Math.abs(syncOffsetSeconds) > 0.1) {
+           const sign = syncOffsetSeconds > 0 ? "+" : ""; // Add plus sign for positive offsets
+           offsetMsg = ` (Offset: P2 ${sign}${syncOffsetSeconds.toFixed(2)}s)`;
+        }
+        statusElement.textContent = `Sync Enabled: Playback controls linked.${offsetMsg}`;
+    } else {
+        statusElement.textContent = 'Sync Disabled: Controls are independent. Adjust videos and re-enable sync.';
+    }
+}
+
+// Setup ALL button/control listeners
 function setupButtonListeners() {
-    // Setup Load Button Listener
+    // --- Setup Load Button Listener ---
     if (loadBtn) {
         loadBtn.onclick = loadVideos;
         console.log("Load Videos button listener attached.");
@@ -402,15 +332,14 @@ function setupButtonListeners() {
         console.error("Load Videos button not found during listener setup!");
     }
 
-    // Setup Toggle Button Listener
+    // --- Setup Toggle View Button Listener ---
     if (toggleViewBtn && mainContainer) {
-        toggleViewBtn.onclick = () => {
+         toggleViewBtn.onclick = () => {
             console.log("Toggle view button clicked.");
-            // Toggle classes on both container and body
             mainContainer.classList.toggle('controls-hidden');
             document.body.classList.toggle('fullscreen-active');
-
             const isHidden = mainContainer.classList.contains('controls-hidden');
+            // Update button text/icon/aria state
             if (isHidden) {
                 toggleViewBtn.innerHTML = '<i class="fas fa-eye"></i> Show Controls';
                 toggleViewBtn.title = "Show Controls View";
@@ -419,42 +348,81 @@ function setupButtonListeners() {
                 toggleViewBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Controls';
                 toggleViewBtn.title = "Hide Controls View";
                 toggleViewBtn.setAttribute('aria-pressed', 'false');
-
-                // Optional: Force a reflow/resize which might help layout when exiting fullscreen
-                // It shouldn't be strictly necessary with the CSS transitions.
-                 // window.dispatchEvent(new Event('resize'));
             }
-             console.log("Fullscreen active:", document.body.classList.contains('fullscreen-active'));
+            console.log("Fullscreen active:", document.body.classList.contains('fullscreen-active'));
         };
         console.log("Toggle view button listener attached.");
-
     } else {
         console.warn("Toggle view button or main container not found during listener setup.");
+    }
+
+    // --- Setup Sync Toggle Checkbox Listener ---
+    if (syncToggleCheckbox) {
+        syncToggleCheckbox.onchange = () => {
+            isSyncGloballyEnabled = syncToggleCheckbox.checked;
+            console.log("Global Sync Enabled Toggled:", isSyncGloballyEnabled);
+
+            if (!isSyncGloballyEnabled) {
+                // DISABLING sync: Stop drift timer
+                stopSyncTimer();
+                console.log("Sync Disabled: Drift timer stopped.");
+            } else {
+                // RE-ENABLING sync: Calculate and store the current offset
+                console.log("Sync Re-enabled: Calculating offset...");
+                if (playersReady === 2 && player1 && player2 &&
+                    typeof player1.getCurrentTime === 'function' && typeof player2.getCurrentTime === 'function') {
+                     try {
+                         const time1 = player1.getCurrentTime();
+                         const time2 = player2.getCurrentTime();
+                         syncOffsetSeconds = time2 - time1; // Calculate and store offset (P2 - P1)
+                         console.log(`  - P1 Time: ${time1.toFixed(2)}, P2 Time: ${time2.toFixed(2)}`);
+                         console.log(`  - Calculated Offset (P2 - P1): ${syncOffsetSeconds.toFixed(2)}s`);
+
+                         // Restart drift timer ONLY if both players are currently playing
+                         const state1 = player1.getPlayerState();
+                         const state2 = player2.getPlayerState();
+                         if (state1 === YT.PlayerState.PLAYING && state2 === YT.PlayerState.PLAYING) {
+                             startSyncTimer();
+                         } else {
+                             stopSyncTimer(); // Ensure it's stopped otherwise
+                         }
+                     } catch (e) {
+                         console.warn("Error calculating offset on re-enable:", e);
+                         syncOffsetSeconds = 0; // Reset offset on error
+                         stopSyncTimer(); // Stop timer on error
+                     }
+                } else {
+                    console.log("  - Could not calculate offset (players not ready/valid). Offset remains 0.");
+                    syncOffsetSeconds = 0; // Ensure offset is 0 if calculation fails
+                    stopSyncTimer(); // Ensure timer is stopped if we can't calculate offset
+                }
+            }
+            updateSyncStatusMessage(); // Update the status text reflecting new state/offset
+        };
+         console.log("Sync toggle listener attached.");
+    } else {
+         console.warn("Sync toggle checkbox not found during listener setup.");
     }
 }
 
 
 // --- Initial Setup ---
-// Use DOMContentLoaded to ensure HTML elements are available
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("DOM Content Loaded.");
+    console.log("DOM Content Loaded. Setting up initial state and listeners.");
 
-    // Initial button state (disabled until API ready)
-    if (loadBtn) {
-        loadBtn.disabled = true;
-        console.log("Load button initially disabled.");
-    } else {
-         console.error("Load button not found on DOMContentLoaded!");
-    }
-
-    // Ensure initial view state is correct
-     if (mainContainer) mainContainer.classList.remove('controls-hidden');
+    // Initial button states
+    if (loadBtn) { loadBtn.disabled = true; }
+    // Initial view states
+    if (mainContainer) mainContainer.classList.remove('controls-hidden');
      document.body.classList.remove('fullscreen-active');
      if (toggleViewBtn) toggleViewBtn.setAttribute('aria-pressed', 'false');
+    // Initial sync states
+    isSyncGloballyEnabled = true;
+    syncOffsetSeconds = 0; // Ensure offset is 0 initially
+    if (syncToggleCheckbox) { syncToggleCheckbox.checked = true; }
 
-
-    // Set up button listeners now that the DOM is ready
+    // Setup listeners AFTER setting initial states
     setupButtonListeners();
 });
 
-console.log("Script execution finished."); // Log end of script load
+console.log("Initial script execution finished.");

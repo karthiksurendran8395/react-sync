@@ -20,6 +20,10 @@
 }
 
 /* --- Base Styles --- */
+html {
+    height: 100%; /* Needed for body height 100% to work reliably */
+}
+
 body {
     font-family: var(--font-primary);
     background-color: var(--light-gray);
@@ -29,6 +33,7 @@ body {
     justify-content: center;
     padding: 20px;
     min-height: 100vh;
+    height: 100%; /* Ensure body takes full height */
     transition: padding 0.3s ease, background-color 0.3s ease;
     overflow-x: hidden; /* Prevent horizontal scroll issues */
 }
@@ -36,14 +41,8 @@ body {
 body.fullscreen-active {
     padding: 0;
     background-color: #000;
-    /* Ensure html/body take full height */
-    height: 100%;
     overflow: hidden; /* Hide scrollbars in fullscreen */
 }
-html {
-    height: 100%; /* Needed for body height 100% to work reliably */
-}
-
 
 .main-container {
     background-color: var(--white);
@@ -64,7 +63,7 @@ html {
 header {
      width: 100%;
      margin-bottom: 30px;
-     transition: margin-bottom 0.3s ease;
+     transition: margin-bottom 0.3s ease, opacity 0.3s ease, visibility 0s linear 0.3s; /* Added for hide transition */
 }
 header h1 {
     font-family: var(--font-headings);
@@ -91,7 +90,7 @@ header h1 {
     display: flex;
     align-items: center;
     gap: 6px;
-    opacity: 1; /* Ensure visible */
+    opacity: 1;
 }
 #toggleViewBtn:hover {
     background-color: rgba(52, 58, 64, 0.9);
@@ -107,8 +106,9 @@ header h1 {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    align-items: center;
-    gap: 15px 20px;
+    align-items: flex-end; /* Align items to bottom for better baseline alignment */
+    gap: 15px 20px; /* Column gap first */
+    row-gap: 20px; /* Increased row gap */
     margin-bottom: 20px;
     padding: 20px;
     background-color: var(--light-gray);
@@ -116,17 +116,111 @@ header h1 {
     width: 100%;
     max-width: 800px;
     border: 1px solid var(--border-color);
-    transition: margin-bottom 0.3s ease, opacity 0.3s ease, visibility 0s linear 0.3s; /* Added visibility */
+    transition: margin-bottom 0.3s ease, opacity 0.3s ease, visibility 0s linear 0.3s;
 }
-/* Input groups, labels, inputs, button - styles remain the same */
-.input-group { display: flex; flex-direction: column; gap: 5px; }
-.input-group label { font-weight: 500; font-size: 0.9rem; color: var(--secondary-color); }
-.input-group input[type="text"] { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem; min-width: 200px; transition: border-color 0.2s ease; }
-.input-group input[type="text"]:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25); }
-.controls-section button#loadVideosBtn { padding: 10px 25px; background-color: var(--primary-color); color: var(--white); border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 500; transition: background-color 0.2s ease, transform 0.1s ease; align-self: flex-end; margin-top: 22px; }
-.controls-section button#loadVideosBtn:hover { background-color: var(--primary-hover); transform: translateY(-1px); }
-.controls-section button#loadVideosBtn:disabled { background-color: var(--secondary-color); cursor: not-allowed; transform: none; opacity: 0.7; }
-.input-hint { font-size: 0.85rem; color: var(--secondary-color); text-align: center; width: 100%; margin-top: 5px; flex-basis: 100%; }
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.input-group label {
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+    margin-bottom: 2px; /* Slight space */
+}
+.input-group input[type="text"] {
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 1rem;
+    min-width: 200px;
+    transition: border-color 0.2s ease;
+    height: 41px; /* Match button height */
+}
+.input-group input[type="text"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+.controls-section button#loadVideosBtn {
+    padding: 10px 25px;
+    background-color: var(--primary-color);
+    color: var(--white);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background-color 0.2s ease, transform 0.1s ease, opacity 0.3s ease;
+    margin-top: 0;
+    margin-bottom: 5px; /* Align baseline with checkbox label */
+    height: 41px; /* Match input height approx */
+    line-height: 1.4; /* Adjust for vertical text centering */
+}
+.controls-section button#loadVideosBtn:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-1px);
+}
+.controls-section button#loadVideosBtn:disabled {
+    background-color: var(--secondary-color);
+    cursor: not-allowed;
+    transform: none;
+    opacity: 0.7;
+}
+
+/* Styling for Sync Toggle */
+.sync-toggle-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px; /* Align baseline with button */
+    order: 5; /* Default order: after button if wrapped */
+    flex-basis: 100%; /* Default to full width wrap */
+    justify-content: center;
+    padding-top: 10px; /* Space above when wrapped */
+}
+/* Adjust layout for wider screens */
+@media (min-width: 650px) {
+     .sync-toggle-group {
+        flex-basis: auto; /* Allow it inline */
+        padding-top: 0;
+        order: 3; /* Place between inputs and button */
+         margin-left: 15px; /* Space from input */
+    }
+    .controls-section button#loadVideosBtn {
+        order: 4; /* Ensure button is after toggle */
+         margin-left: 15px;
+    }
+}
+
+.sync-toggle-group input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--primary-color); /* Style the check color */
+    flex-shrink: 0; /* Prevent shrinking */
+    margin-top: 2px; /* Fine-tune vertical alignment */
+}
+
+.sync-toggle-group label {
+    font-size: 0.95rem;
+    color: var(--secondary-color);
+    cursor: pointer;
+    user-select: none; /* Prevent text selection on label click */
+    line-height: 1.2; /* Ensure alignment */
+}
+
+
+.input-hint {
+    font-size: 0.85rem;
+    color: var(--secondary-color);
+    text-align: center;
+    width: 100%;
+    margin-top: 10px;
+    flex-basis: 100%;
+    order: 6; /* Ensure it's last */
+}
 
 /* --- Status Message --- */
 .status {
@@ -136,7 +230,7 @@ header h1 {
     color: var(--secondary-color);
     min-height: 1.6em;
     width: 100%;
-    transition: margin-bottom 0.3s ease, opacity 0.3s ease, visibility 0s linear 0.3s; /* Added visibility */
+    transition: margin-bottom 0.3s ease, opacity 0.3s ease, visibility 0s linear 0.3s;
 }
 
 /* --- Players Area --- */
@@ -165,7 +259,7 @@ header h1 {
     font-size: 1.3rem;
     color: var(--dark-gray);
     margin-bottom: 15px;
-    transition: opacity 0.3s ease, height 0.3s ease, margin 0.3s ease, visibility 0s linear 0.3s; /* Added visibility */
+    transition: opacity 0.3s ease, height 0.3s ease, margin 0.3s ease, visibility 0s linear 0.3s;
 }
 
 /* Player placeholder and iframe styling */
@@ -178,7 +272,7 @@ header h1 {
     background-color: #eee;
     box-shadow: 0 3px 8px var(--shadow-color);
     transition: border 0.3s ease, border-radius 0.3s ease, box-shadow 0.3s ease, height 0.3s ease, aspect-ratio 0.3s ease, background-color 0.3s ease;
-    display: block; /* Ensure iframe takes space */
+    display: block;
 }
 .video-wrapper iframe {
      background-color: #000;
@@ -187,42 +281,39 @@ header h1 {
 /* --- Styles when controls are hidden (FULLSCREEN MODE) --- */
 
 .main-container.controls-hidden {
-    /* Make the container effectively invisible and take full width/height */
     max-width: none;
     width: 100%;
-    height: 100%; /* Take full body height */
+    height: 100%;
     padding: 0;
     background: transparent;
     box-shadow: none;
     border-radius: 0;
-    margin: 0; /* Remove any centering margin */
-    opacity: 1; /* Keep container itself technically visible */
-    overflow: hidden; /* Hide anything trying to escape */
+    margin: 0;
+    opacity: 1;
+    overflow: hidden;
 }
 
 .main-container.controls-hidden header,
 .main-container.controls-hidden .controls-section,
 .main-container.controls-hidden .status,
 .main-container.controls-hidden .video-wrapper h2 {
-    /* Hide completely and remove from layout flow */
     opacity: 0;
-    visibility: hidden; /* Hide from accessibility tree too */
+    visibility: hidden;
     height: 0;
     margin: 0;
     padding: 0;
     border: 0;
     overflow: hidden;
-    position: absolute; /* Take out of normal flow */
-    z-index: -1; /* Ensure behind players */
+    position: absolute;
+    z-index: -1;
     transition: opacity 0.3s ease, visibility 0s linear 0.3s, height 0.3s ease, margin 0.3s ease, padding 0.3s ease;
 }
 
-/* Reposition toggle button using fixed positioning in fullscreen */
 .main-container.controls-hidden #toggleViewBtn {
     position: fixed;
     top: 15px;
     right: 15px;
-    opacity: 0.8; /* Slightly less intrusive in fullscreen */
+    opacity: 0.8;
 }
 .main-container.controls-hidden #toggleViewBtn:hover {
     opacity: 1;
@@ -231,10 +322,10 @@ header h1 {
 .main-container.controls-hidden .players-container {
    margin-top: 0;
    gap: 0;
-   width: 100%; /* Fill the main-container width (100vw) */
-   height: 100%; /* Fill the main-container height (100vh) */
+   width: 100%;
+   height: 100%;
    flex-wrap: nowrap;
-   background-color: #000; /* Ensure black background */
+   background-color: #000;
 }
 
 .main-container.controls-hidden .video-wrapper {
@@ -242,7 +333,7 @@ header h1 {
     max-width: 50%;
     min-width: 0;
     height: 100%;
-    width: 50%; /* Be explicit */
+    width: 50%;
 }
 
 .main-container.controls-hidden .player-placeholder,
@@ -264,10 +355,36 @@ header h1 {
     .main-container:not(.controls-hidden) { padding: 20px; }
     header:not(.main-container.controls-hidden *) h1 { font-size: 1.8rem; }
     header:not(.main-container.controls-hidden *) { margin-bottom: 20px; }
-    .controls-section:not(.main-container.controls-hidden *) { padding: 15px; gap: 15px; }
+    .controls-section:not(.main-container.controls-hidden *) {
+         padding: 15px;
+         gap: 15px;
+         align-items: center; /* Center align on mobile */
+    }
     .input-group:not(.main-container.controls-hidden *) { width: 100%; }
     .input-group input[type="text"]:not(.main-container.controls-hidden *) { width: 100%; min-width: auto; }
-    .controls-section button#loadVideosBtn:not(.main-container.controls-hidden *) { width: 100%; margin-top: 10px; padding: 12px 20px; align-self: center; }
+    .controls-section button#loadVideosBtn:not(.main-container.controls-hidden *) {
+        width: 100%;
+        margin-top: 15px; /* Space above button */
+        margin-bottom: 0;
+        margin-left: 0; /* No left margin */
+        padding: 12px 20px;
+        align-self: center;
+        order: 3; /* Button before toggle */
+        height: auto; /* Reset height */
+    }
+     .sync-toggle-group:not(.main-container.controls-hidden *) {
+        order: 4; /* Toggle after button */
+        margin-top: 15px; /* Space above toggle */
+        padding-top: 0;
+        margin-bottom: 0;
+        margin-left: 0; /* No left margin */
+        flex-basis: 100%; /* Ensure full width */
+    }
+     .input-hint:not(.main-container.controls-hidden *) {
+        order: 5;
+        margin-top: 15px;
+    }
+
     .players-container:not(.main-container.controls-hidden *) { gap: 20px; }
     .video-wrapper:not(.main-container.controls-hidden *) { flex-basis: 100%; max-width: none; }
     #toggleViewBtn:not(.main-container.controls-hidden *) { top: 15px; right: 15px; padding: 6px 10px; font-size: 0.8rem; }
@@ -278,12 +395,11 @@ header h1 {
         flex-direction: column;
     }
     .main-container.controls-hidden .video-wrapper {
-        flex-basis: 50%; /* Each takes half vertically */
-        width: 100%;   /* Full width */
+        flex-basis: 50%;
+        width: 100%;
         max-width: 100%;
-        height: 50%;   /* Half height */
+        height: 50%;
     }
-     /* Button position is already fixed and should be okay */
 }
 
 @media (max-width: 480px) {

@@ -14,7 +14,6 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Add position: relative to allow absolute positioning of button if needed -->
     <div class="main-container">
         <header>
             <h1>YouTube Sync Player</h1>
@@ -26,6 +25,7 @@
         </button>
 
         <section class="controls-section">
+            <!-- Video ID Input Groups -->
             <div class="input-group">
                 <label for="videoId1">Left Video (URL or ID):</label>
                 <input type="text" id="videoId1" placeholder="Video URL or ID (e.g., dQw4w9WgXcQ)">
@@ -34,7 +34,17 @@
                 <label for="videoId2">Right Video (URL or ID):</label>
                 <input type="text" id="videoId2" placeholder="Video URL or ID (e.g., QH2-TGUlwu4)">
             </div>
+
+            <!-- Load Button -->
             <button id="loadVideosBtn">Load Videos</button>
+
+            <!-- Sync Toggle Checkbox -->
+            <div class="sync-toggle-group">
+                 <input type="checkbox" id="syncToggleCheckbox" checked>
+                 <label for="syncToggleCheckbox">Enable Playback Sync</label>
+            </div>
+
+            <!-- Input Hint -->
             <p class="input-hint">Enter a YouTube Video URL or just the Video ID.</p>
         </section>
 
