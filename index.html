@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synced YouTube Players</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Synced YouTube Players</h1>
+
+    <div class="input-container">
+        <label for="videoId1">Video 1 ID:</label>
+        <input type="text" id="videoId1" value="dQw4w9WgXcQ"> <!-- Default Example -->
+        <label for="videoId2">Video 2 ID:</label>
+        <input type="text" id="videoId2" value="QH2-TGUlwu4"> <!-- Default Example -->
+        <button id="loadVideosBtn">Load Videos</button>
+    </div>
+
+    <div class="players-container">
+        <div class="video-wrapper">
+            <h2>Video 1</h2>
+            <div id="player1"></div>
+        </div>
+        <div class="video-wrapper">
+            <h2>Video 2</h2>
+            <div id="player2"></div>
+        </div>
+    </div>
+
+    <p class="status" id="status">Loading API...</p>
+
+    <!-- YouTube IFrame Player API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <!-- Our Custom Script -->
+    <script src="script.js"></script>
+</body>
+</html>

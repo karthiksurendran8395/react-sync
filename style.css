@@ -1,0 +1,77 @@
+body {
+    font-family: sans-serif;
+    margin: 20px;
+    background-color: #f4f4f4;
+}
+
+h1, h2 {
+    text-align: center;
+    color: #333;
+}
+
+.input-container {
+    text-align: center;
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.input-container label {
+    margin: 0 10px;
+}
+
+.input-container input[type="text"] {
+    padding: 8px;
+    margin-right: 10px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+.input-container button {
+    padding: 8px 15px;
+    background-color: #5cb85c;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.input-container button:hover {
+    background-color: #4cae4c;
+}
+
+
+.players-container {
+    display: flex;
+    justify-content: space-around; /* Distribute space around items */
+    align-items: flex-start; /* Align items to the top */
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    gap: 20px; /* Add space between the video wrappers */
+    margin-top: 20px;
+}
+
+.video-wrapper {
+    flex: 1 1 45%; /* Flex grow, shrink, basis (allow shrinking, aim for 45% width) */
+    min-width: 300px; /* Minimum width before wrapping */
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Make the iframe responsive */
+.video-wrapper iframe {
+    width: 100%;
+    aspect-ratio: 16 / 9; /* Maintain 16:9 aspect ratio */
+    border: none; /* Remove default iframe border */
+}
+
+.status {
+    text-align: center;
+    margin-top: 20px;
+    font-style: italic;
+    color: #666;
+}
