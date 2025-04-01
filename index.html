@@ -8,24 +8,30 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons (Optional, but nice for the toggle button) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
     <!-- Our Stylesheet -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Add position: relative to allow absolute positioning of button if needed -->
     <div class="main-container">
         <header>
             <h1>YouTube Sync Player</h1>
         </header>
 
+        <!-- NEW: Toggle View Button -->
+        <button id="toggleViewBtn" title="Toggle Controls View">
+             <i class="fas fa-eye-slash"></i> Hide Controls <!-- Initial state -->
+        </button>
+
         <section class="controls-section">
             <div class="input-group">
                 <label for="videoId1">Left Video (URL or ID):</label>
-                <!-- Value attribute removed -->
                 <input type="text" id="videoId1" placeholder="Video URL or ID (e.g., dQw4w9WgXcQ)">
             </div>
             <div class="input-group">
                 <label for="videoId2">Right Video (URL or ID):</label>
-                <!-- Value attribute removed -->
                 <input type="text" id="videoId2" placeholder="Video URL or ID (e.g., QH2-TGUlwu4)">
             </div>
             <button id="loadVideosBtn">Load Videos</button>

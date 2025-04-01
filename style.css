@@ -41,15 +41,51 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center; /* Center content horizontally */
+    position: relative; /* Needed for absolute positioning of the toggle button */
+    transition: padding-top 0.3s ease; /* Smooth transition for padding change */
 }
 
 /* --- Header --- */
+header {
+     width: 100%; /* Ensure header takes width for centering */
+     margin-bottom: 30px;
+     transition: margin-bottom 0.3s ease; /* Smooth transition */
+}
 header h1 {
     font-family: var(--font-headings);
     font-weight: 600;
     color: var(--primary-color);
-    margin-bottom: 30px;
     text-align: center;
+    margin: 0; /* Reset margin as header controls spacing */
+}
+
+/* --- Toggle View Button --- */
+#toggleViewBtn {
+    position: absolute; /* Position relative to main-container */
+    top: 25px;          /* Adjust as needed */
+    right: 30px;         /* Adjust as needed */
+    padding: 8px 12px;
+    background-color: var(--secondary-color);
+    color: var(--white);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    z-index: 10; /* Ensure it's above other content if needed */
+    display: flex; /* Align icon and text */
+    align-items: center;
+    gap: 6px;
+}
+
+#toggleViewBtn:hover {
+    background-color: var(--dark-gray);
+    transform: translateY(-1px);
+}
+
+#toggleViewBtn i { /* Style for Font Awesome icon */
+    font-size: 1em;
+     line-height: 1; /* Prevent icon affecting button height */
 }
 
 /* --- Controls Section --- */
@@ -66,6 +102,7 @@ header h1 {
     width: 100%;
     max-width: 800px; /* Limit width of control section */
     border: 1px solid var(--border-color);
+    transition: margin-bottom 0.3s ease, opacity 0.3s ease; /* Smooth transition */
 }
 
 .input-group {
@@ -95,7 +132,7 @@ header h1 {
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
-.controls-section button {
+.controls-section button#loadVideosBtn { /* Be more specific to avoid styling toggle btn */
     padding: 10px 25px;
     background-color: var(--primary-color);
     color: var(--white);
@@ -109,12 +146,12 @@ header h1 {
     margin-top: 22px; /* Align baseline with inputs when not wrapped */
 }
 
-.controls-section button:hover {
+.controls-section button#loadVideosBtn:hover {
     background-color: var(--primary-hover);
     transform: translateY(-1px);
 }
 
-.controls-section button:disabled {
+.controls-section button#loadVideosBtn:disabled {
     background-color: var(--secondary-color);
     cursor: not-allowed;
     transform: none;
@@ -138,6 +175,7 @@ header h1 {
     color: var(--secondary-color);
     min-height: 1.6em; /* Prevent layout jump */
     width: 100%;
+    transition: margin-bottom 0.3s ease, opacity 0.3s ease; /* Smooth transition */
 }
 
 /* --- Players Area --- */
@@ -147,6 +185,7 @@ header h1 {
     gap: 30px; /* Space between video wrappers */
     flex-wrap: wrap; /* Allow wrapping */
     width: 100%;
+    transition: margin-top 0.3s ease; /* Smooth transition */
 }
 
 .video-wrapper {
@@ -182,6 +221,39 @@ header h1 {
      background-color: #000; /* Black background typical for videos */
 }
 
+/* --- Styles when controls are hidden --- */
+.main-container.controls-hidden {
+    padding-top: 20px; /* Reduce top padding */
+    padding-bottom: 20px; /* Reduce bottom padding */
+     /* Side padding remains */
+}
+
+.main-container.controls-hidden header,
+.main-container.controls-hidden .controls-section,
+.main-container.controls-hidden .status {
+    /* Animate out smoothly */
+    opacity: 0;
+    visibility: hidden;
+    height: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: hidden;
+    transition: opacity 0.3s ease, visibility 0s linear 0.3s, height 0.3s ease, margin 0.3s ease, padding 0.3s ease;
+}
+/* Instead of display: none, use opacity/visibility/height for smoother transitions */
+/*
+.main-container.controls-hidden header,
+.main-container.controls-hidden .controls-section,
+.main-container.controls-hidden .status {
+    display: none;
+}
+*/
+
+.main-container.controls-hidden .players-container {
+   margin-top: 0px; /* Remove top margin when controls are hidden */
+}
+
 
 /* --- Responsive Adjustments --- */
 @media (max-width: 768px) {
@@ -193,6 +265,8 @@ header h1 {
     }
     header h1 {
         font-size: 1.8rem;
+    }
+     header {
         margin-bottom: 20px;
     }
     .controls-section {
@@ -206,10 +280,11 @@ header h1 {
         width: 100%;
         min-width: auto;
     }
-    .controls-section button {
+    .controls-section button#loadVideosBtn {
          width: 100%; /* Make button full width */
          margin-top: 0; /* Reset margin */
          padding: 12px 20px; /* Adjust padding */
+         align-self: center;
     }
     .players-container {
         gap: 20px;
@@ -218,6 +293,17 @@ header h1 {
         flex-basis: 100%; /* Stack videos vertically */
         max-width: none; /* Allow full width */
     }
+    #toggleViewBtn {
+        top: 15px;
+        right: 15px;
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+    .main-container.controls-hidden {
+        padding-top: 15px;
+        padding-bottom: 15px;
+    }
+
 }
 
 @media (max-width: 480px) {
@@ -230,5 +316,22 @@ header h1 {
     }
      .video-wrapper h2 {
         font-size: 1.1rem;
+    }
+     #toggleViewBtn {
+        top: 10px;
+        right: 10px;
+    }
+    /* Optional: hide text on very small screens */
+    /*
+    #toggleViewBtn span {
+       display: none;
+    }
+    #toggleViewBtn i {
+        margin-right: 0;
+    }
+    */
+    .main-container.controls-hidden {
+        padding-top: 10px;
+        padding-bottom: 10px;
     }
 }
