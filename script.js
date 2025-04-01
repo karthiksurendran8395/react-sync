@@ -8,14 +8,18 @@ const loadBtn = document.getElementById('loadVideosBtn');
 const videoId1Input = document.getElementById('videoId1');
 const videoId2Input = document.getElementById('videoId2');
 
-// 1. This function creates an <iframe> (and YouTube player)
-//    after the API code downloads. It's called automatically by the API.
+let syncInterval = null; // Variable to hold the interval timer
+const SYNC_THRESHOLD = 1.0; // Max allowed time difference in seconds before resync
+const SYNC_INTERVAL_MS = 1500; // How often to check for drift (milliseconds)
+
+// 1. API Ready Callback
 window.onYouTubeIframeAPIReady = function() {
     statusElement.textContent = 'API Loaded. Enter Video IDs and click "Load Videos".';
     loadBtn.disabled = false;
-    loadBtn.onclick = loadVideos; // Attach event listener here
+    loadBtn.onclick = loadVideos;
 };
 
+// 2. Load Videos Function
 function loadVideos() {
     const videoId1 = videoId1Input.value.trim();
     const videoId2 = videoId2Input.value.trim();
@@ -28,20 +32,17 @@ function loadVideos() {
     statusElement.textContent = 'Loading videos...';
     loadBtn.disabled = true; // Disable button during load
 
-    // Reset state
+    // Reset state and clear previous interval
     playersReady = 0;
-    destroyPlayers(); // Destroy existing players if any
+    stopSyncTimer();
+    destroyPlayers();
 
     // Create Player 1
     player1 = new YT.Player('player1', {
-        height: '360', // Will be overridden by CSS aspect-ratio
-        width: '640',  // Will be overridden by CSS width: 100%
+        height: '360',
+        width: '640',
         videoId: videoId1,
-        playerVars: {
-            'playsinline': 1, // Important for mobile playback
-            'enablejsapi': 1, // Enable JavaScript API
-            // 'controls': 0 // Use 0 for fully custom controls, 1 for default YT controls
-        },
+        playerVars: { 'playsinline': 1, 'enablejsapi': 1 },
         events: {
             'onReady': onPlayerReady,
             'onStateChange': onPlayerStateChange
@@ -53,11 +54,7 @@ function loadVideos() {
         height: '360',
         width: '640',
         videoId: videoId2,
-        playerVars: {
-            'playsinline': 1,
-            'enablejsapi': 1,
-            // 'controls': 0
-        },
+        playerVars: { 'playsinline': 1, 'enablejsapi': 1 },
         events: {
             'onReady': onPlayerReady,
             'onStateChange': onPlayerStateChange
@@ -65,7 +62,9 @@ function loadVideos() {
     });
 }
 
+// 3. Destroy Players Function
 function destroyPlayers() {
+    stopSyncTimer(); // Make sure timer is stopped
     if (player1 && typeof player1.destroy === 'function') {
         player1.destroy();
         player1 = null;
@@ -74,32 +73,28 @@ function destroyPlayers() {
         player2.destroy();
         player2 = null;
     }
-    // Clear the placeholder divs in case of errors or reload
     document.getElementById('player1').innerHTML = '';
     document.getElementById('player2').innerHTML = '';
-
 }
 
-// 2. The API calls this function when the video player is ready.
+// 4. Player Ready Handler
 function onPlayerReady(event) {
     playersReady++;
     if (playersReady === 2) {
         statusElement.textContent = 'Players Ready. Controls are synced.';
-        loadBtn.disabled = false; // Re-enable button
-        // You could potentially auto-play here if desired,
-        // but user interaction is generally required by browsers.
-        // syncTime(); // Initial time sync might be useful
+        loadBtn.disabled = false;
+        startSyncTimer(); // Start checking for drift
     } else {
          statusElement.textContent = `Waiting for ${2 - playersReady} more player(s)...`;
     }
 }
 
-// 3. The API calls this function when the player's state changes.
+// 5. Player State Change Handler
 function onPlayerStateChange(event) {
     if (isSyncing || playersReady < 2) {
-        // If the change was triggered by our sync code or players aren't ready,
-        // reset the flag and ignore the event to prevent loops.
-        isSyncing = false;
+        // If we triggered this change or players aren't ready, ignore it
+        // Reset flag if needed, although it should be reset after the sync action
+        // isSyncing = false; // Might reset too early if action is async
         return;
     }
 
@@ -109,66 +104,137 @@ function onPlayerStateChange(event) {
 
     // console.log("State Change:", state, "Source:", (sourcePlayer === player1) ? "P1" : "P2");
 
+    setSyncing(true); // Set flag BEFORE potentially triggering actions
+
     switch (state) {
         case YT.PlayerState.PLAYING:
-            // When one starts playing, play the other and sync time
-            isSyncing = true; // Set flag BEFORE triggering action on target
-            const currentTime = sourcePlayer.getCurrentTime();
-            targetPlayer.seekTo(currentTime, true); // Seek first
-            targetPlayer.playVideo();              // Then play
-             // console.log("Sync: Play", "Time:", currentTime);
+            // Only command the target to play. Time sync handled by pause/seek and drift check.
+            targetPlayer.playVideo();
+            // Start the sync timer if it wasn't running (e.g., after buffering/pause)
+            startSyncTimer();
+            // console.log("Sync: Play Command");
+            clearSyncingTimeout(); // Clear previous timeouts if any
             break;
 
         case YT.PlayerState.PAUSED:
-            // When one pauses, pause the other and sync time
-            isSyncing = true; // Set flag BEFORE triggering action on target
-             // Pause slightly *after* getting time, otherwise currentTime might be slightly off
+            // Pause the target AND explicitly sync time here, as pausing is a deliberate sync point.
             targetPlayer.pauseVideo();
-            // Ensure times are aligned on pause
-            setTimeout(() => { // Small delay allows pause action to settle
-                 const pausedTime = sourcePlayer.getCurrentTime();
+             // Get time AFTER telling the other to pause
+            const pausedTime = sourcePlayer.getCurrentTime();
+             // Use a slight delay seeking after pausing allows the pause command to process
+            setTimeout(() => {
                  targetPlayer.seekTo(pausedTime, true);
-                 // console.log("Sync: Pause", "Time:", pausedTime);
-            }, 100); // 100ms delay, adjust if needed
-            break;
+                 // console.log("Sync: Pause & Seek", "Time:", pausedTime);
+                 // Stop the sync timer when paused to avoid unnecessary checks
+                 stopSyncTimer();
+                 clearSyncingTimeout(); // Safe to clear the flag now
+            }, 150); // Increased delay slightly
+             // IMPORTANT: Don't reset isSyncing immediately here due to the timeout
+            return; // Prevent immediate reset of isSyncing flag below
 
         case YT.PlayerState.BUFFERING:
-            // Optional: Pause the other player while one is buffering to keep sync
-            // isSyncing = true;
+            // Optional: Pause the other player cleanly? Often unnecessary.
             // targetPlayer.pauseVideo();
-            // console.log("Sync: Buffering Pause");
-             // Note: This can sometimes feel jerky if buffering is frequent.
-             // The PLAYING state's seekTo often handles buffer recovery adequately.
+            // console.log("Sync: Buffering detected");
+            // Stop sync timer during buffer to prevent potentially bad syncs
+            stopSyncTimer();
             break;
 
         case YT.PlayerState.ENDED:
-            // Optional: Pause the other player when one ends
-            isSyncing = true;
+            // Optional: Pause the other player cleanly
             targetPlayer.pauseVideo();
-            // console.log("Sync: Ended Pause");
+            // console.log("Sync: Ended");
+            stopSyncTimer(); // Stop timer when ended
             break;
 
         // case YT.PlayerState.CUED:
             // console.log("Sync: Cued");
-            // break; // Do nothing specific for cued usually
+            // break;
     }
 
-    // Reset sync flag if it wasn't reset by the return statement (e.g., if no action taken)
-    // Added safety, though the logic above should handle it.
-    // setTimeout(() => { isSyncing = false; }, 50);
+    // Reset the flag after a short delay ONLY IF not handled by PAUSED state's timeout
+     if (state !== YT.PlayerState.PAUSED) {
+       clearSyncingTimeout();
+    }
 }
 
-// Optional function to manually sync time if needed (e.g., on load)
-function syncTime() {
-    if (player1 && player2 && playersReady === 2) {
+// --- Sync Timer Logic ---
+
+function startSyncTimer() {
+    // Clear any existing timer before starting a new one
+    stopSyncTimer();
+    // console.log("Starting sync timer");
+    syncInterval = setInterval(checkAndSyncTime, SYNC_INTERVAL_MS);
+}
+
+function stopSyncTimer() {
+    if (syncInterval) {
+        // console.log("Stopping sync timer");
+        clearInterval(syncInterval);
+        syncInterval = null;
+    }
+}
+
+function checkAndSyncTime() {
+    if (isSyncing || playersReady < 2 || !player1 || !player2) {
+        return; // Don't sync if already syncing, players not ready, or players destroyed
+    }
+
+    const state1 = player1.getPlayerState();
+    const state2 = player2.getPlayerState();
+
+    // Only sync if BOTH players are supposed to be playing
+    if (state1 === YT.PlayerState.PLAYING && state2 === YT.PlayerState.PLAYING) {
         const time1 = player1.getCurrentTime();
-        // console.log("Manual Sync: Setting P2 time to P1 time:", time1);
-        isSyncing = true; // Prevent immediate state change loop
-        player2.seekTo(time1, true);
-        // It's good practice to reset the flag after a short delay
-        setTimeout(() => { isSyncing = false; }, 100);
+        const time2 = player2.getCurrentTime();
+        const diff = Math.abs(time1 - time2);
+
+        if (diff > SYNC_THRESHOLD) {
+            // console.log(`Drift detected: P1=${time1.toFixed(2)}s, P2=${time2.toFixed(2)}s. Diff=${diff.toFixed(2)}s. Syncing.`);
+            setSyncing(true); // Prevent state change loop from seek
+
+            // Sync Player 2 to Player 1's time
+            player2.seekTo(time1, true);
+
+            // Reset the syncing flag after a short delay to allow seek to process
+            clearSyncingTimeout();
+        }
     }
+    // If one is playing and the other isn't (and not buffering/cued), maybe force play?
+    // else if (state1 === YT.PlayerState.PLAYING && (state2 === YT.PlayerState.PAUSED || state2 === YT.PlayerState.ENDED)) {
+    //      console.log("Sync Check: P1 playing, P2 not. Forcing P2 play.");
+    //      setSyncing(true);
+    //      player2.playVideo();
+    //      clearSyncingTimeout();
+    // } // Add similar check for P2 playing / P1 not
+
 }
+
+// --- Helper functions for isSyncing flag ---
+// Use these to manage the flag with a safety timeout reset
+
+let syncTimeout = null;
+
+function setSyncing(status) {
+    // console.log("Setting isSyncing to:", status);
+    isSyncing = status;
+    // Clear any previous timeout just in case
+    if (syncTimeout) clearTimeout(syncTimeout);
+    syncTimeout = null;
+}
+
+function clearSyncingTimeout() {
+    // Clear the flag after a short delay (e.g., 250ms)
+    // This prevents race conditions where the stateChange event fires slightly
+    // before our sync action fully completes or if the action doesn't fire an event.
+    if (syncTimeout) clearTimeout(syncTimeout); // Clear previous one if exists
+    syncTimeout = setTimeout(() => {
+        // console.log("Resetting isSyncing via timeout");
+        isSyncing = false;
+        syncTimeout = null;
+    }, 250); // Adjust delay if needed
+}
+
 
 // Initial setup: Disable button until API is ready
 loadBtn.disabled = true;
