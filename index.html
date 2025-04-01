@@ -19,15 +19,17 @@
 
         <section class="controls-section">
             <div class="input-group">
-                <label for="videoId1">Left Video ID:</label>
-                <input type="text" id="videoId1" placeholder="e.g., dQw4w9WgXcQ" value="dQw4w9WgXcQ">
+                <label for="videoId1">Left Video (URL or ID):</label>
+                <!-- Value attribute removed -->
+                <input type="text" id="videoId1" placeholder="Video URL or ID (e.g., dQw4w9WgXcQ)">
             </div>
             <div class="input-group">
-                <label for="videoId2">Right Video ID:</label>
-                <input type="text" id="videoId2" placeholder="e.g., QH2-TGUlwu4" value="QH2-TGUlwu4">
+                <label for="videoId2">Right Video (URL or ID):</label>
+                <!-- Value attribute removed -->
+                <input type="text" id="videoId2" placeholder="Video URL or ID (e.g., QH2-TGUlwu4)">
             </div>
             <button id="loadVideosBtn">Load Videos</button>
-            <p class="input-hint">Enter the code after "v=" in the YouTube URL.</p>
+            <p class="input-hint">Enter a YouTube Video URL or just the Video ID.</p>
         </section>
 
          <p class="status" id="status">Loading API...</p>
