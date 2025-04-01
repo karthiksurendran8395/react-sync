@@ -3,36 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Synced YouTube Players</title>
+    <title>YouTube Sync Player</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Our Stylesheet -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Synced YouTube Players</h1>
+    <div class="main-container">
+        <header>
+            <h1>YouTube Sync Player</h1>
+        </header>
 
-    <div class="input-container">
-        <label for="videoId1">Video 1 ID:</label>
-        <input type="text" id="videoId1" value="dQw4w9WgXcQ"> <!-- Default Example -->
-        <label for="videoId2">Video 2 ID:</label>
-        <input type="text" id="videoId2" value="QH2-TGUlwu4"> <!-- Default Example -->
-        <button id="loadVideosBtn">Load Videos</button>
-    </div>
+        <section class="controls-section">
+            <div class="input-group">
+                <label for="videoId1">Left Video ID:</label>
+                <input type="text" id="videoId1" placeholder="e.g., dQw4w9WgXcQ" value="dQw4w9WgXcQ">
+            </div>
+            <div class="input-group">
+                <label for="videoId2">Right Video ID:</label>
+                <input type="text" id="videoId2" placeholder="e.g., QH2-TGUlwu4" value="QH2-TGUlwu4">
+            </div>
+            <button id="loadVideosBtn">Load Videos</button>
+            <p class="input-hint">Enter the code after "v=" in the YouTube URL.</p>
+        </section>
 
-    <div class="players-container">
-        <div class="video-wrapper">
-            <h2>Video 1</h2>
-            <div id="player1"></div>
-        </div>
-        <div class="video-wrapper">
-            <h2>Video 2</h2>
-            <div id="player2"></div>
-        </div>
-    </div>
+         <p class="status" id="status">Loading API...</p>
 
-    <p class="status" id="status">Loading API...</p>
+        <main class="players-container">
+            <div class="video-wrapper">
+                <h2>Left Video</h2>
+                <div id="player1" class="player-placeholder"></div>
+            </div>
+            <div class="video-wrapper">
+                <h2>Right Video</h2>
+                <div id="player2" class="player-placeholder"></div>
+            </div>
+        </main>
 
-    <!-- YouTube IFrame Player API -->
+    </div> <!-- /main-container -->
+
+    <!-- YouTube IFrame Player API (Leave As Is) -->
     <script src="https://www.youtube.com/iframe_api"></script>
-    <!-- Our Custom Script -->
+    <!-- Our Custom Script (Leave As Is) -->
     <script src="script.js"></script>
 </body>
 </html>

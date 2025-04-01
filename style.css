@@ -1,77 +1,234 @@
+/* --- Variables and Reset --- */
+:root {
+    --primary-color: #007bff; /* Vibrant Blue */
+    --primary-hover: #0056b3;
+    --secondary-color: #6c757d; /* Medium Gray */
+    --light-gray: #f8f9fa;     /* Very Light Gray (Background) */
+    --dark-gray: #343a40;      /* Dark Gray (Text) */
+    --white: #ffffff;
+    --border-color: #dee2e6;   /* Light Border Color */
+    --shadow-color: rgba(0, 0, 0, 0.1);
+
+    --font-primary: 'Roboto', sans-serif;
+    --font-headings: 'Poppins', sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* --- Base Styles --- */
 body {
-    font-family: sans-serif;
-    margin: 20px;
-    background-color: #f4f4f4;
+    font-family: var(--font-primary);
+    background-color: var(--light-gray);
+    color: var(--dark-gray);
+    line-height: 1.6;
+    display: flex; /* For centering main-container */
+    justify-content: center; /* For centering main-container */
+    padding: 20px;
+    min-height: 100vh;
 }
 
-h1, h2 {
-    text-align: center;
-    color: #333;
+.main-container {
+    background-color: var(--white);
+    padding: 30px 40px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px var(--shadow-color);
+    width: 100%;
+    max-width: 1400px; /* Limit maximum width */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center content horizontally */
 }
 
-.input-container {
+/* --- Header --- */
+header h1 {
+    font-family: var(--font-headings);
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 30px;
     text-align: center;
+}
+
+/* --- Controls Section --- */
+.controls-section {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    justify-content: center;
+    align-items: center; /* Align items vertically */
+    gap: 15px 20px; /* Row gap, Column gap */
     margin-bottom: 20px;
-    padding: 15px;
-    background-color: #fff;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 20px;
+    background-color: var(--light-gray); /* Slight contrast for controls */
+    border-radius: 8px;
+    width: 100%;
+    max-width: 800px; /* Limit width of control section */
+    border: 1px solid var(--border-color);
 }
 
-.input-container label {
-    margin: 0 10px;
+.input-group {
+    display: flex;
+    flex-direction: column; /* Stack label above input */
+    gap: 5px;
 }
 
-.input-container input[type="text"] {
-    padding: 8px;
-    margin-right: 10px;
-    border: 1px solid #ccc;
-    border-radius: 3px;
+.input-group label {
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--secondary-color);
 }
 
-.input-container button {
-    padding: 8px 15px;
-    background-color: #5cb85c;
-    color: white;
+.input-group input[type="text"] {
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 1rem;
+    min-width: 200px; /* Give inputs some base width */
+    transition: border-color 0.2s ease;
+}
+
+.input-group input[type="text"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.controls-section button {
+    padding: 10px 25px;
+    background-color: var(--primary-color);
+    color: var(--white);
     border: none;
-    border-radius: 3px;
+    border-radius: 6px;
     cursor: pointer;
-    transition: background-color 0.2s;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    align-self: flex-end; /* Align with bottom of inputs if wrapped */
+    margin-top: 22px; /* Align baseline with inputs when not wrapped */
 }
 
-.input-container button:hover {
-    background-color: #4cae4c;
+.controls-section button:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+.controls-section button:disabled {
+    background-color: var(--secondary-color);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.input-hint {
+    font-size: 0.85rem;
+    color: var(--secondary-color);
+    text-align: center;
+    width: 100%; /* Span full width of controls */
+    margin-top: 5px; /* Space below button/inputs */
+    flex-basis: 100%; /* Ensure it takes full width when wrapping */
 }
 
 
+/* --- Status Message --- */
+.status {
+    text-align: center;
+    margin: 15px 0 25px 0; /* Add more vertical space */
+    font-style: italic;
+    color: var(--secondary-color);
+    min-height: 1.6em; /* Prevent layout jump */
+    width: 100%;
+}
+
+/* --- Players Area --- */
 .players-container {
     display: flex;
-    justify-content: space-around; /* Distribute space around items */
-    align-items: flex-start; /* Align items to the top */
-    flex-wrap: wrap; /* Allow wrapping on smaller screens */
-    gap: 20px; /* Add space between the video wrappers */
-    margin-top: 20px;
+    justify-content: center; /* Center items if space allows */
+    gap: 30px; /* Space between video wrappers */
+    flex-wrap: wrap; /* Allow wrapping */
+    width: 100%;
 }
 
 .video-wrapper {
-    flex: 1 1 45%; /* Flex grow, shrink, basis (allow shrinking, aim for 45% width) */
-    min-width: 300px; /* Minimum width before wrapping */
-    background-color: #fff;
-    padding: 15px;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    flex: 1 1 45%; /* Grow, shrink, basis (target ~45% width) */
+    min-width: 320px; /* Minimum width before wrapping */
+    max-width: 700px; /* Prevent getting excessively large */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center h2 and player */
 }
 
-/* Make the iframe responsive */
+.video-wrapper h2 {
+    font-family: var(--font-headings);
+    font-weight: 600;
+    font-size: 1.3rem;
+    color: var(--dark-gray);
+    margin-bottom: 15px;
+}
+
+/* Style the div AND the iframe inside it */
+.player-placeholder,
 .video-wrapper iframe {
     width: 100%;
-    aspect-ratio: 16 / 9; /* Maintain 16:9 aspect ratio */
-    border: none; /* Remove default iframe border */
+    aspect-ratio: 16 / 9; /* Maintain aspect ratio */
+    border: 1px solid var(--border-color); /* Subtle border */
+    border-radius: 8px; /* Rounded corners */
+    background-color: #eee; /* Placeholder background */
+    box-shadow: 0 3px 8px var(--shadow-color); /* Subtle shadow on player */
 }
 
-.status {
-    text-align: center;
-    margin-top: 20px;
-    font-style: italic;
-    color: #666;
+/* Ensure iframe overrides placeholder background */
+.video-wrapper iframe {
+     background-color: #000; /* Black background typical for videos */
+}
+
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    .main-container {
+        padding: 20px;
+    }
+    header h1 {
+        font-size: 1.8rem;
+        margin-bottom: 20px;
+    }
+    .controls-section {
+        padding: 15px;
+        gap: 15px; /* Reduce gap */
+    }
+    .input-group {
+        width: 100%; /* Make inputs take full width */
+    }
+     .input-group input[type="text"] {
+        width: 100%;
+        min-width: auto;
+    }
+    .controls-section button {
+         width: 100%; /* Make button full width */
+         margin-top: 0; /* Reset margin */
+         padding: 12px 20px; /* Adjust padding */
+    }
+    .players-container {
+        gap: 20px;
+    }
+    .video-wrapper {
+        flex-basis: 100%; /* Stack videos vertically */
+        max-width: none; /* Allow full width */
+    }
+}
+
+@media (max-width: 480px) {
+     header h1 {
+        font-size: 1.5rem;
+    }
+    .main-container {
+        padding: 15px;
+        border-radius: 8px;
+    }
+     .video-wrapper h2 {
+        font-size: 1.1rem;
+    }
 }
