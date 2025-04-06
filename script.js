@@ -16,12 +16,15 @@ let isSyncing = false; // Internal flag for preventing event loops
 // --- Sync State Variables ---
 let isSyncGloballyEnabled = true; // Master switch for sync controls
 let syncOffsetSeconds = 0; // Stores the time difference (P2 time - P1 time)
-let syncInterval = null;
+let syncInterval = null; // Timer for *correcting* drift
 const SYNC_THRESHOLD_DRIFT = 1.0; // Max allowed drift (seconds) before correction during playback
 const SYNC_THRESHOLD_SEEK = 0.5; // Max allowed diff (seconds) before seeking on play/pause
 const SYNC_INTERVAL_MS = 1500; // How often to check for drift (milliseconds)
 let syncTimeout = null; // Timeout handle for releasing the isSyncing lock
 
+// --- NEW: Drift Monitoring Variables ---
+let driftLogInterval = null; // Timer for *logging* drift
+const DRIFT_LOG_INTERVAL_MS = 2000; // Log every 2 seconds
 
 // --- Helper function to extract Video ID ---
 function extractVideoId(input) {
@@ -86,7 +89,8 @@ function loadVideos() {
     isSyncing = false; // Reset internal sync lock
     if (syncTimeout) clearTimeout(syncTimeout); // Clear any pending sync lock release
     syncTimeout = null;
-    stopSyncTimer(); // Stop any active drift check interval
+    stopSyncTimer(); // Stop correction timer
+    stopDriftLogTimer(); // *** NEW: Stop logging timer ***
     destroyPlayers(); // Remove existing player instances and iframes
     isSyncGloballyEnabled = true; // Reset master sync switch to ON
     syncOffsetSeconds = 0; // Reset time offset to zero
@@ -130,7 +134,8 @@ function loadVideos() {
 // Function to properly destroy existing player instances
 function destroyPlayers() {
     console.log("Destroying existing players...");
-    stopSyncTimer(); // Ensure sync timer is stopped
+    stopSyncTimer(); // Stop correction timer
+    stopDriftLogTimer(); // *** NEW: Stop logging timer ***
     if (syncTimeout) clearTimeout(syncTimeout); // Clear pending sync lock release
     syncTimeout = null;
     isSyncing = false; // Reset internal sync lock flag
@@ -162,6 +167,7 @@ function onPlayerReady(event) {
         // Both players are now ready
         if (statusElement) statusElement.textContent = 'Players Ready.'; // Initial status
         updateSyncStatusMessage(); // Update status based on sync state & offset
+        startDriftLogTimer(); // *** NEW: Start logging timer when both players ready ***
         if (loadBtn) {
             loadBtn.disabled = false; // Re-enable load button
             console.log("Load button re-enabled (both players ready).");
@@ -343,21 +349,22 @@ function syncTargetPlayer(targetPlayer, sourcePlayer, sourceState, sourceTime, o
     }
 }
 
-// --- Sync Timer Logic (Periodic Drift Check - Uses Offset) ---
+
+// --- Sync Timer Logic (Periodic Drift Check & *Correction* - Uses Offset) ---
 
 // Start the interval timer to periodically check for time drift between players
 function startSyncTimer() {
     // Don't start if sync is globally off or timer is already running
     if (!isSyncGloballyEnabled || syncInterval) { return; }
     stopSyncTimer(); // Clear any existing timer first
-    console.log(`Starting sync timer (Interval: ${SYNC_INTERVAL_MS}ms)`);
+    console.log(`Starting sync correction timer (Interval: ${SYNC_INTERVAL_MS}ms)`);
     syncInterval = setInterval(checkAndSyncTime, SYNC_INTERVAL_MS);
 }
 
 // Stop the interval timer
 function stopSyncTimer() {
     if (syncInterval) {
-        console.log("Stopping sync timer.");
+        console.log("Stopping sync correction timer.");
         clearInterval(syncInterval);
         syncInterval = null;
     }
@@ -392,7 +399,7 @@ function checkAndSyncTime() {
 
             // If the absolute difference exceeds the drift threshold, correct player 2's time
             if (absDiff > SYNC_THRESHOLD_DRIFT) {
-                console.log(`Drift Check: P1=${time1.toFixed(2)}, P2=${time2.toFixed(2)}, Expected P2=${expectedTime2.toFixed(2)}. Diff=${diff.toFixed(2)}s > ${SYNC_THRESHOLD_DRIFT}. Syncing P2.`);
+                console.log(`Drift Correction: P1=${time1.toFixed(2)}, P2=${time2.toFixed(2)}, Expected P2=${expectedTime2.toFixed(2)}. Diff=${diff.toFixed(2)}s > ${SYNC_THRESHOLD_DRIFT}. Syncing P2.`);
                 setSyncing(true); // *** LOCK ***
                 player2.seekTo(expectedTime2, true); // Seek P2 to the expected time
                 clearSyncingTimeout(150); // *** UNLOCK (Delayed) ***
@@ -402,8 +409,57 @@ function checkAndSyncTime() {
             stopSyncTimer();
         }
     } catch (e) {
-        console.warn("Error during periodic sync check (drift):", e);
+        console.warn("Error during periodic sync check (drift correction):", e);
         stopSyncTimer(); // Stop timer on error
+    }
+}
+
+
+// --- NEW: Drift Monitoring Logic (Periodic Logging) ---
+
+function logDrift() {
+    // This function only *logs* the drift, it doesn't correct anything.
+    if (playersReady < 2 || !player1 || !player2 ||
+        typeof player1.getCurrentTime !== 'function' || typeof player2.getCurrentTime !== 'function') {
+        return; // Exit if players aren't ready or valid
+    }
+
+    try {
+        const time1 = player1.getCurrentTime();
+        const time2 = player2.getCurrentTime();
+        const actualOffset = time2 - time1;
+        // Drift = Difference between the offset observed *now* and the desired/stored offset
+        const drift = actualOffset - syncOffsetSeconds;
+
+        // Log the values - using .toFixed(3) for slightly more detail in the log
+        console.log(
+            `Drift Monitor | ` +
+            `P1: ${time1.toFixed(3)}s | ` +
+            `P2: ${time2.toFixed(3)}s | ` +
+            `Actual Offset: ${actualOffset.toFixed(3)}s | ` +
+            `Expected Offset: ${syncOffsetSeconds.toFixed(3)}s | ` +
+            `Drift: ${drift.toFixed(3)}s`
+        );
+
+    } catch (e) {
+        console.warn("Error during drift logging:", e);
+        // Optional: Stop this timer if errors persist? For now, let it keep trying.
+        // stopDriftLogTimer();
+    }
+}
+
+function startDriftLogTimer() {
+    if (driftLogInterval) return; // Already running
+    stopDriftLogTimer(); // Clear any residual timer first
+    console.log(`Starting drift monitor log timer (Interval: ${DRIFT_LOG_INTERVAL_MS}ms)`);
+    driftLogInterval = setInterval(logDrift, DRIFT_LOG_INTERVAL_MS);
+}
+
+function stopDriftLogTimer() {
+    if (driftLogInterval) {
+        console.log("Stopping drift monitor log timer.");
+        clearInterval(driftLogInterval);
+        driftLogInterval = null;
     }
 }
 
@@ -493,8 +549,9 @@ function setupButtonListeners() {
             if (!isSyncGloballyEnabled) {
                 // --- Actions when DISABLING sync ---
                 stopSyncTimer(); // Stop the periodic drift check immediately
-                console.log("Sync Disabled: Drift timer stopped.");
-                // Offset remains as it was, status message will update below.
+                console.log("Sync Disabled: Drift correction timer stopped.");
+                // Note: We keep the drift *logging* timer running even when sync is disabled,
+                // so the user can still monitor the difference they are creating.
             } else {
                 // --- Actions when RE-ENABLING sync ---
                 console.log("Sync Re-enabled: Calculating and storing current time offset...");
@@ -512,10 +569,10 @@ function setupButtonListeners() {
                          const state1 = player1.getPlayerState();
                          const state2 = player2.getPlayerState();
                          if (state1 === YT.PlayerState.PLAYING && state2 === YT.PlayerState.PLAYING) {
-                             console.log("  - Both players playing, starting drift timer.");
+                             console.log("  - Both players playing, starting drift correction timer.");
                              startSyncTimer();
                          } else {
-                             console.log("  - Players not both playing, drift timer remains stopped.");
+                             console.log("  - Players not both playing, drift correction timer remains stopped.");
                              stopSyncTimer(); // Ensure it's stopped otherwise
                          }
                      } catch (e) {
