@@ -21,7 +21,7 @@
 
 /* --- Base Styles --- */
 html {
-    height: 100%;
+    height: 100%; /* Ensure html takes full height */
 }
 
 body {
@@ -31,17 +31,20 @@ body {
     line-height: 1.6;
     display: flex;
     justify-content: center;
+    align-items: flex-start; /* Align container to top */
     padding: 20px;
-    min-height: 100vh;
-    height: 100%;
+    min-height: 100vh; /* Ensure body covers viewport */
+    height: 100%; /* Allow body to size correctly */
     transition: padding 0.3s ease, background-color 0.3s ease;
-    overflow-x: hidden;
+    overflow-x: hidden; /* Prevent horizontal scroll */
 }
 
+/* Class added to body when controls are hidden */
 body.fullscreen-active {
-    padding: 0;
-    background-color: #000;
-    overflow: hidden;
+    padding: 0; /* Remove padding */
+    background-color: #000; /* Black background */
+    overflow: hidden; /* Hide scrollbars */
+    align-items: center; /* Center the container vertically in fullscreen */
 }
 
 .main-container {
@@ -50,63 +53,67 @@ body.fullscreen-active {
     border-radius: 12px;
     box-shadow: 0 5px 15px var(--shadow-color);
     width: 100%;
-    max-width: 1400px;
+    max-width: 1400px; /* Max width for large screens */
     display: flex;
     flex-direction: column;
-    align-items: center;
-    position: relative; /* Needed for absolute positioning */
-    transition: padding 0.3s ease, max-width 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease, border-radius 0.3s ease, opacity 0.3s ease;
-    margin: auto 0;
+    align-items: center; /* Center content horizontally */
+    position: relative; /* Needed for absolute positioning of buttons */
+    transition: padding 0.3s ease, max-width 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease, border-radius 0.3s ease, opacity 0.3s ease, height 0.3s ease;
+    margin: auto 0; /* Vertical centering using flex on body */
 }
 
 /* --- Header --- */
 header {
      width: 100%;
      margin-bottom: 30px;
-     transition: margin-bottom 0.3s ease, opacity 0.3s ease, visibility 0s linear 0.3s;
+     text-align: center;
+     /* Transition properties for smooth hide/show */
+     transition: margin-bottom 0.3s ease, opacity 0.3s ease, height 0.3s ease, visibility 0s linear 0.3s;
+     height: auto; /* Default height */
+     opacity: 1;
+     visibility: visible;
 }
 header h1 {
     font-family: var(--font-headings);
     font-weight: 600;
     color: var(--primary-color);
-    text-align: center;
     margin: 0;
 }
 
-/* --- Toggle View Button --- */
+/* --- Toggle View Button (Hide/Show Controls) --- */
 #toggleViewBtn {
-    position: absolute;
-    top: 25px; /* Higher position */
+    position: absolute; /* Position relative to main-container */
+    top: 25px;
     right: 30px;
     padding: 8px 12px;
-    background-color: rgba(108, 117, 125, 0.8);
+    background-color: rgba(108, 117, 125, 0.8); /* Semi-transparent gray */
     color: var(--white);
     border: none;
     border-radius: 6px;
     cursor: pointer;
     font-size: 0.9rem;
     transition: background-color 0.2s ease, transform 0.1s ease, top 0.3s ease, right 0.3s ease, opacity 0.3s ease;
-    z-index: 1001;
+    z-index: 1001; /* Ensure it's above other elements */
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 6px; /* Space between icon and text */
     opacity: 1;
 }
 #toggleViewBtn:hover {
-    background-color: rgba(52, 58, 64, 0.9);
-    transform: translateY(-1px);
+    background-color: rgba(52, 58, 64, 0.9); /* Darker on hover */
+    transform: translateY(-1px); /* Subtle lift effect */
 }
 #toggleViewBtn i {
     font-size: 1em;
-    line-height: 1;
+    line-height: 1; /* Prevent extra spacing */
 }
 
-/* --- Sync Toggle Container (Positioned Absolutely/Fixed) --- */
+/* --- Sync Toggle Container (Positioned near Toggle View) --- */
 #syncToggleContainer {
-    position: absolute;
-    top: 70px; /* Position below the toggle view button */
+    position: absolute; /* Position relative to main-container */
+    top: 70px; /* Below the toggle view button */
     right: 30px;
-    z-index: 1001;
+    z-index: 1001; /* Ensure it's above other elements */
     background-color: rgba(108, 117, 125, 0.8);
     padding: 6px 10px;
     border-radius: 6px;
@@ -114,53 +121,59 @@ header h1 {
     opacity: 1;
 }
 #syncToggleContainer:hover {
-     background-color: rgba(52, 58, 64, 0.9);
+     background-color: rgba(52, 58, 64, 0.9); /* Darker on hover */
 }
 
-/* Styles for the group *inside* the positioned container */
+/* Styles for the checkbox and label *inside* the positioned container */
 .sync-toggle-group {
     display: flex;
     align-items: center;
     gap: 8px;
 }
 .sync-toggle-group input[type="checkbox"] {
-    width: 16px;
+    width: 16px; /* Checkbox size */
     height: 16px;
     cursor: pointer;
-    accent-color: var(--primary-color);
-    flex-shrink: 0;
-    margin: 0;
+    accent-color: var(--primary-color); /* Color the checkmark */
+    flex-shrink: 0; /* Prevent shrinking in flex */
+    margin: 0; /* Remove default margins */
 }
 .sync-toggle-group label {
     font-size: 0.85rem;
     color: var(--white);
     cursor: pointer;
-    user-select: none;
-    line-height: 1;
-    font-weight: 500;
+    user-select: none; /* Prevent text selection */
+    line-height: 1; /* Prevent extra spacing */
+    font-weight: 500; /* Slightly bolder text */
 }
 
-/* --- Controls Section --- */
+/* --- Controls Section (Inputs and Load Button) --- */
 .controls-section {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: flex-end;
-    gap: 15px 20px;
-    row-gap: 20px;
+    flex-wrap: wrap; /* Allow items to wrap on smaller screens */
+    justify-content: center; /* Center items horizontally */
+    align-items: flex-end; /* Align items to bottom (useful for button) */
+    gap: 15px 20px; /* Row and column gap */
+    row-gap: 20px; /* Explicit row gap */
     margin-bottom: 20px;
     padding: 20px;
     background-color: var(--light-gray);
     border-radius: 8px;
     width: 100%;
-    max-width: 800px; /* Adjust if needed */
+    max-width: 800px; /* Limit width of controls area */
     border: 1px solid var(--border-color);
-    transition: margin-bottom 0.3s ease, opacity 0.3s ease, visibility 0s linear 0.3s;
+    /* Transition properties for smooth hide/show */
+    transition: margin-bottom 0.3s ease, opacity 0.3s ease, height 0.3s ease, padding 0.3s ease, border 0.3s ease, visibility 0s linear 0.3s;
+    height: auto; /* Default height */
+    opacity: 1;
+    visibility: visible;
 }
 .input-group {
     display: flex;
     flex-direction: column;
     gap: 5px;
+    flex-grow: 1; /* Allow input groups to grow */
+    min-width: 200px; /* Minimum width before wrapping */
 }
 .input-group label {
     font-weight: 500;
@@ -173,14 +186,14 @@ header h1 {
     border: 1px solid var(--border-color);
     border-radius: 6px;
     font-size: 1rem;
-    min-width: 200px;
-    transition: border-color 0.2s ease;
-    height: 41px;
+    width: 100%; /* Take full width of parent .input-group */
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    height: 41px; /* Match button height */
 }
 .input-group input[type="text"]:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25); /* Focus ring */
 }
 .controls-section button#loadVideosBtn {
     padding: 10px 25px;
@@ -192,10 +205,11 @@ header h1 {
     font-size: 1rem;
     font-weight: 500;
     transition: background-color 0.2s ease, transform 0.1s ease, opacity 0.3s ease;
-    margin-top: 0;
-    height: 41px;
-    line-height: 1.4;
-    margin-left: 15px; /* Space from inputs */
+    margin-top: 0; /* Align with bottom of inputs */
+    height: 41px; /* Standard height */
+    line-height: 1.4; /* Adjust line height for vertical centering */
+    flex-shrink: 0; /* Prevent button from shrinking */
+    margin-left: 15px; /* Space from inputs on wider screens */
 }
 .controls-section button#loadVideosBtn:hover {
     background-color: var(--primary-hover);
@@ -211,9 +225,10 @@ header h1 {
     font-size: 0.85rem;
     color: var(--secondary-color);
     text-align: center;
-    width: 100%;
+    width: 100%; /* Take full width */
     margin-top: 10px;
     flex-basis: 100%; /* Ensure it takes full width below inputs/button */
+    order: 3; /* Ensure hint is below button */
 }
 
 /* --- Status Message --- */
@@ -222,24 +237,28 @@ header h1 {
     margin: 15px 0 25px 0;
     font-style: italic;
     color: var(--secondary-color);
-    min-height: 1.6em;
+    min-height: 1.6em; /* Prevent layout shift when text changes */
     width: 100%;
-    transition: margin-bottom 0.3s ease, opacity 0.3s ease, visibility 0s linear 0.3s;
+    /* Transition properties for smooth hide/show */
+    transition: margin-bottom 0.3s ease, opacity 0.3s ease, height 0.3s ease, visibility 0s linear 0.3s;
+    height: auto; /* Default height */
+    opacity: 1;
+    visibility: visible;
 }
 
 /* --- Players Area --- */
 .players-container {
     display: flex;
-    justify-content: center;
-    gap: 30px;
-    flex-wrap: wrap;
+    justify-content: center; /* Center players horizontally */
+    gap: 30px; /* Space between players */
+    flex-wrap: wrap; /* Allow wrapping on small screens */
     width: 100%;
     transition: margin-top 0.3s ease, gap 0.3s ease, width 0.3s ease, height 0.3s ease;
 }
 .video-wrapper {
-    flex: 1 1 45%;
-    min-width: 320px;
-    max-width: 700px;
+    flex: 1 1 45%; /* Grow, shrink, basis 45% (allows 2 side-by-side with gap) */
+    min-width: 320px; /* Minimum width for smaller players */
+    max-width: 700px; /* Max width per player */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -251,100 +270,171 @@ header h1 {
     font-size: 1.3rem;
     color: var(--dark-gray);
     margin-bottom: 15px;
+    text-align: center;
+    /* Transition properties for smooth hide/show */
     transition: opacity 0.3s ease, height 0.3s ease, margin 0.3s ease, visibility 0s linear 0.3s;
+    height: auto; /* Default height */
+    opacity: 1;
+    visibility: visible;
 }
 .player-placeholder,
 .video-wrapper iframe {
+    /* Styles for the player area (placeholder and iframe) */
     width: 100%;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 16 / 9; /* Maintain 16:9 aspect ratio */
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    background-color: #eee;
+    background-color: #eee; /* Placeholder background */
     box-shadow: 0 3px 8px var(--shadow-color);
     transition: border 0.3s ease, border-radius 0.3s ease, box-shadow 0.3s ease, height 0.3s ease, aspect-ratio 0.3s ease, background-color 0.3s ease;
-    display: block;
+    display: block; /* Ensure it behaves like a block element */
 }
 .video-wrapper iframe {
-     background-color: #000;
+     background-color: #000; /* Black background behind video */
 }
 
-/* --- Styles when controls are hidden (FULLSCREEN MODE) --- */
+/* --- Styles when controls are hidden (FULLSCREEN / VIEW MODE) --- */
 .main-container.controls-hidden {
+    /* Make container fill the screen */
     max-width: none; width: 100%; height: 100%; padding: 0;
-    background: transparent; box-shadow: none; border-radius: 0;
-    margin: 0; opacity: 1; overflow: hidden;
+    background: transparent; /* Transparent background, body bg shows */
+    box-shadow: none; border-radius: 0;
+    margin: 0; /* Remove margin */
+    opacity: 1; /* Ensure it's visible */
+    overflow: hidden; /* Hide overflow */
 }
+
+/* Hide header, controls, status, video titles smoothly */
 .main-container.controls-hidden header,
 .main-container.controls-hidden .controls-section,
 .main-container.controls-hidden .status,
 .main-container.controls-hidden .video-wrapper h2 {
-    opacity: 0; visibility: hidden; height: 0; margin: 0; padding: 0;
-    border: 0; overflow: hidden; position: absolute; z-index: -1;
+    opacity: 0; /* Fade out */
+    visibility: hidden; /* Remove from accessibility tree */
+    height: 0; /* Collapse height */
+    margin: 0; padding: 0; border: 0; /* Remove spacing and borders */
+    overflow: hidden; /* Hide content immediately */
+    position: absolute; /* Take out of flow to prevent residual space */
+    z-index: -1; /* Ensure it's behind */
     transition: opacity 0.3s ease, visibility 0s linear 0.3s, height 0.3s ease, margin 0.3s ease, padding 0.3s ease;
 }
-.main-container.controls-hidden #toggleViewBtn {
-    position: fixed; top: 15px; right: 15px; opacity: 0.8;
-}
-.main-container.controls-hidden #toggleViewBtn:hover { opacity: 1; }
+
+/* Adjust toggle buttons for fullscreen mode */
+.main-container.controls-hidden #toggleViewBtn,
 .main-container.controls-hidden #syncToggleContainer {
-    position: fixed; top: 60px; right: 15px; opacity: 0.8;
-    background-color: rgba(108, 117, 125, 0.8); /* Ensure visible bg */
+    position: fixed; /* Position relative to viewport */
+    opacity: 0.8; /* Slightly transparent */
+    /* Ensure background is visible over black video bg */
+    background-color: rgba(108, 117, 125, 0.8);
 }
+.main-container.controls-hidden #toggleViewBtn {
+     top: 15px; right: 15px;
+}
+.main-container.controls-hidden #syncToggleContainer {
+     top: 60px; right: 15px;
+}
+.main-container.controls-hidden #toggleViewBtn:hover,
 .main-container.controls-hidden #syncToggleContainer:hover {
-    opacity: 1; background-color: rgba(52, 58, 64, 0.9);
+    opacity: 1; /* Fully opaque on hover */
+    background-color: rgba(52, 58, 64, 0.9); /* Darker hover */
 }
+
+/* Adjust player layout for fullscreen mode */
 .main-container.controls-hidden .players-container {
-   margin-top: 0; gap: 0; width: 100%; height: 100%; flex-wrap: nowrap; background-color: #000;
+   margin-top: 0; /* Remove top margin */
+   gap: 0; /* Remove gap between players */
+   width: 100%; height: 100%; /* Fill the container */
+   flex-wrap: nowrap; /* Prevent wrapping */
+   background-color: #000; /* Black background for player area */
 }
 .main-container.controls-hidden .video-wrapper {
+    /* Each player takes half the width, full height */
     flex-basis: 50%; max-width: 50%; min-width: 0; height: 100%; width: 50%;
 }
 .main-container.controls-hidden .player-placeholder,
 .main-container.controls-hidden .video-wrapper iframe {
-    border: none; border-radius: 0; box-shadow: none; height: 100%; width: 100%; aspect-ratio: auto; background-color: #000;
+    /* Make player fill its wrapper, remove styling */
+    border: none; border-radius: 0; box-shadow: none;
+    height: 100%; width: 100%;
+    aspect-ratio: auto; /* Override aspect ratio for full height */
+    background-color: #000;
 }
 
 /* --- Responsive Adjustments --- */
 @media (max-width: 768px) {
-    /* Normal Mode Responsive */
+    /* === Normal Mode Responsive (Tablet) === */
+    /* Apply only when NOT in fullscreen */
     body:not(.fullscreen-active) { padding: 10px; }
     .main-container:not(.controls-hidden) { padding: 20px; }
-    header:not(.main-container.controls-hidden *) h1 { font-size: 1.8rem; }
-    header:not(.main-container.controls-hidden *) { margin-bottom: 20px; }
-    .controls-section:not(.main-container.controls-hidden *) {
-         padding: 15px; gap: 15px; align-items: center;
+
+    /* Target elements specifically when *not* hidden */
+    header:not(.main-container.controls-hidden header) { margin-bottom: 20px; }
+    header:not(.main-container.controls-hidden header) h1 { font-size: 1.8rem; }
+
+    .controls-section:not(.main-container.controls-hidden .controls-section) {
+         padding: 15px; gap: 15px; align-items: stretch; /* Stretch items vertically */
     }
-    .input-group:not(.main-container.controls-hidden *) { width: 100%; }
-    .input-group input[type="text"]:not(.main-container.controls-hidden *) { width: 100%; min-width: auto; }
-    .controls-section button#loadVideosBtn:not(.main-container.controls-hidden *) {
-        width: 100%; margin-top: 15px; margin-bottom: 0; margin-left: 0;
-        padding: 12px 20px; align-self: center; height: auto;
+    .input-group:not(.main-container.controls-hidden .input-group) {
+        width: 100%; /* Input groups take full width */
+        min-width: auto; /* Override min-width */
     }
-    .input-hint:not(.main-container.controls-hidden *) { margin-top: 15px; }
-    .players-container:not(.main-container.controls-hidden *) { gap: 20px; }
-    .video-wrapper:not(.main-container.controls-hidden *) { flex-basis: 100%; max-width: none; }
-    /* Adjust absolute/fixed button positions for mobile */
-     #toggleViewBtn:not(.main-container.controls-hidden *) {
+    .input-group input[type="text"]:not(.main-container.controls-hidden .input-group input) {
+         width: 100%;
+    }
+    .controls-section button#loadVideosBtn:not(.main-container.controls-hidden button#loadVideosBtn) {
+        width: 100%; /* Button takes full width */
+        margin-top: 15px; /* Space above button */
+        margin-bottom: 0;
+        margin-left: 0; /* Remove left margin */
+        padding: 12px 20px; /* Adjust padding */
+        height: auto; /* Let height be determined by content */
+        order: 2; /* Place button below inputs */
+    }
+    .input-hint:not(.main-container.controls-hidden .input-hint) {
+        margin-top: 15px;
+        order: 3; /* Ensure hint is last */
+    }
+    .players-container:not(.main-container.controls-hidden .players-container) {
+        gap: 20px; /* Reduce gap */
+        flex-direction: column; /* Stack players vertically */
+        align-items: center; /* Center stacked players */
+    }
+    .video-wrapper:not(.main-container.controls-hidden .video-wrapper) {
+        flex-basis: 100%; /* Full width */
+        max-width: 600px; /* Limit width when stacked */
+        width: 100%;
+    }
+    /* Adjust absolute button positions for smaller screens in normal view */
+     #toggleViewBtn:not(.main-container.controls-hidden #toggleViewBtn) {
         top: 15px; right: 15px; padding: 6px 10px; font-size: 0.8rem;
      }
-      #syncToggleContainer:not(.main-container.controls-hidden *) {
-        top: 55px; right: 15px; padding: 5px 8px;
+      #syncToggleContainer:not(.main-container.controls-hidden #syncToggleContainer) {
+        top: 55px; /* Adjust vertical position */ right: 15px; padding: 5px 8px;
      }
-     .sync-toggle-group label:not(.main-container.controls-hidden *) { font-size: 0.8rem; }
-     .sync-toggle-group input[type=checkbox]:not(.main-container.controls-hidden *) { width: 14px; height: 14px; }
+     .sync-toggle-group label:not(.main-container.controls-hidden .sync-toggle-group label) { font-size: 0.8rem; }
+     .sync-toggle-group input[type=checkbox]:not(.main-container.controls-hidden .sync-toggle-group input) { width: 14px; height: 14px; }
 
-    /* --- Fullscreen Mode Responsive (Stack Vertically) --- */
-    .main-container.controls-hidden .players-container { flex-direction: column; }
-    .main-container.controls-hidden .video-wrapper { flex-basis: 50%; width: 100%; max-width: 100%; height: 50%; }
+    /* === Fullscreen Mode Responsive (Tablet/Mobile - Stack Vertically) === */
+    .main-container.controls-hidden .players-container {
+        flex-direction: column; /* Stack players vertically */
+    }
+    .main-container.controls-hidden .video-wrapper {
+        /* Each player takes full width, half height */
+        flex-basis: 50%; width: 100%; max-width: 100%; height: 50%;
+    }
+     /* Adjust fixed button positions slightly for smaller fullscreen */
      .main-container.controls-hidden #toggleViewBtn { top: 10px; right: 10px; }
-      .main-container.controls-hidden #syncToggleContainer { top: 50px; right: 10px; }
+     .main-container.controls-hidden #syncToggleContainer { top: 50px; right: 10px; }
 }
 
 @media (max-width: 480px) {
-     /* Normal Mode Responsive */
-     header:not(.main-container.controls-hidden *) h1 { font-size: 1.5rem; }
+     /* === Normal Mode Responsive (Mobile) === */
+     header:not(.main-container.controls-hidden header) h1 { font-size: 1.5rem; }
      .main-container:not(.controls-hidden) { padding: 15px; border-radius: 8px; }
-     .video-wrapper h2:not(.main-container.controls-hidden *) { font-size: 1.1rem; }
-     #toggleViewBtn:not(.main-container.controls-hidden *) { top: 10px; right: 10px; }
-     #syncToggleContainer:not(.main-container.controls-hidden *) { top: 48px; right: 10px;}
+     .video-wrapper h2:not(.main-container.controls-hidden h2) { font-size: 1.1rem; }
+     /* Further adjust button positions for very small screens */
+     #toggleViewBtn:not(.main-container.controls-hidden #toggleViewBtn) { top: 10px; right: 10px; }
+     #syncToggleContainer:not(.main-container.controls-hidden #syncToggleContainer) { top: 48px; right: 10px;}
+
+     /* Fullscreen adjustments for mobile are generally covered by the 768px breakpoint */
 }
