@@ -234,7 +234,7 @@ header h1 {
 /* --- Status Message --- */
 .status {
     text-align: center;
-    margin: 15px 0 25px 0;
+    margin: 15px 0 10px 0; /* Reduced bottom margin */
     font-style: italic;
     color: var(--secondary-color);
     min-height: 1.6em; /* Prevent layout shift when text changes */
@@ -245,6 +245,121 @@ header h1 {
     opacity: 1;
     visibility: visible;
 }
+
+/* --- NEW: Central Controls Styles --- */
+.central-controls-container {
+    width: 100%;
+    max-width: 900px; /* Adjust max-width as needed */
+    padding: 15px 20px;
+    background-color: var(--dark-gray);
+    border-radius: 8px;
+    margin-bottom: 25px; /* Space before players */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.central-controls-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px; /* Space between buttons */
+}
+
+.central-controls-buttons button {
+    background: none;
+    border: none;
+    color: var(--light-gray);
+    font-size: 1.4rem; /* Adjust icon size */
+    cursor: pointer;
+    padding: 5px;
+    transition: color 0.2s ease, transform 0.1s ease;
+    line-height: 1; /* Ensure icon alignment */
+}
+
+.central-controls-buttons button:hover {
+    color: var(--primary-color);
+    transform: scale(1.1);
+}
+.central-controls-buttons button:disabled {
+    color: var(--secondary-color);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.central-controls-seeker {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 10px;
+}
+
+.central-controls-seeker span {
+    color: var(--light-gray);
+    font-size: 0.85rem;
+    min-width: 40px; /* Prevent time shifting layout */
+    text-align: center;
+}
+
+#centralSeekBar {
+    flex-grow: 1;
+    cursor: pointer;
+    height: 8px;
+    background-color: var(--secondary-color); /* Track background */
+    border-radius: 4px;
+    -webkit-appearance: none; /* Override default look */
+    appearance: none;
+     outline: none;
+}
+/* --- Seek Bar Thumb Styling (Chrome/Safari/Edge) --- */
+#centralSeekBar::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background-color: var(--primary-color); /* Thumb color */
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+#centralSeekBar::-webkit-slider-thumb:hover {
+    background-color: var(--primary-hover);
+}
+/* --- Seek Bar Thumb Styling (Firefox) --- */
+#centralSeekBar::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background-color: var(--primary-color);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none; /* Remove default border */
+    transition: background-color 0.2s ease;
+}
+#centralSeekBar::-moz-range-thumb:hover {
+     background-color: var(--primary-hover);
+}
+/* --- Seek Bar Track Styling (Firefox) --- */
+#centralSeekBar::-moz-range-track {
+    width: 100%;
+    height: 8px;
+    cursor: pointer;
+    background: var(--secondary-color);
+    border-radius: 4px;
+}
+
+/* --- Disabled State for Central Controls --- */
+.central-controls-container.controls-disabled {
+    opacity: 0.5;
+    pointer-events: none; /* Prevent interaction */
+    visibility: hidden; /* Hide it */
+    height: 0; /* Collapse height */
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+}
+
 
 /* --- Players Area --- */
 .players-container {
@@ -308,6 +423,7 @@ header h1 {
 .main-container.controls-hidden header,
 .main-container.controls-hidden .controls-section,
 .main-container.controls-hidden .status,
+.main-container.controls-hidden #centralControls, /* Also hide central controls in fullscreen */
 .main-container.controls-hidden .video-wrapper h2 {
     opacity: 0; /* Fade out */
     visibility: hidden; /* Remove from accessibility tree */
@@ -394,6 +510,25 @@ header h1 {
         margin-top: 15px;
         order: 3; /* Ensure hint is last */
     }
+
+    /* Central Controls Responsive */
+    .central-controls-container:not(.main-container.controls-hidden #centralControls) {
+         padding: 10px 15px; gap: 8px;
+    }
+    .central-controls-buttons:not(.main-container.controls-hidden .central-controls-buttons) {
+         gap: 15px;
+    }
+     .central-controls-buttons button:not(.main-container.controls-hidden .central-controls-buttons button) {
+          font-size: 1.3rem;
+     }
+    .central-controls-seeker:not(.main-container.controls-hidden .central-controls-seeker) {
+         gap: 8px;
+    }
+     .central-controls-seeker span:not(.main-container.controls-hidden .central-controls-seeker span) {
+         font-size: 0.8rem; min-width: 35px;
+     }
+
+
     .players-container:not(.main-container.controls-hidden .players-container) {
         gap: 20px; /* Reduce gap */
         flex-direction: column; /* Stack players vertically */
@@ -432,6 +567,14 @@ header h1 {
      header:not(.main-container.controls-hidden header) h1 { font-size: 1.5rem; }
      .main-container:not(.controls-hidden) { padding: 15px; border-radius: 8px; }
      .video-wrapper h2:not(.main-container.controls-hidden h2) { font-size: 1.1rem; }
+
+     /* Central Controls Mobile */
+     .central-controls-buttons button:not(.main-container.controls-hidden .central-controls-buttons button) { font-size: 1.2rem; }
+     .central-controls-seeker:not(.main-container.controls-hidden .central-controls-seeker) { flex-wrap: wrap; justify-content: center; } /* Allow wrap */
+     #centralSeekBar:not(.main-container.controls-hidden #centralSeekBar) { flex-basis: 100%; order: 1; } /* Seeker full width */
+     .central-controls-seeker span:not(.main-container.controls-hidden .central-controls-seeker span) { order: 2; font-size: 0.75rem; min-width: 30px; } /* Times below */
+
+
      /* Further adjust button positions for very small screens */
      #toggleViewBtn:not(.main-container.controls-hidden #toggleViewBtn) { top: 10px; right: 10px; }
      #syncToggleContainer:not(.main-container.controls-hidden #syncToggleContainer) { top: 48px; right: 10px;}
