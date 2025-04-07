@@ -1,92 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube Sync Player</title>
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
-    <!-- Font Awesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
-    <!-- Our Stylesheet -->
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="main-container">
-        <header>
+   <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>YouTube Sync Player</title>
+      <!-- Google Fonts -->
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+      <!-- Font Awesome for Icons -->
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+      <!-- Our Stylesheet -->
+      <link rel="stylesheet" href="style.css">
+   </head>
+   <body>
+      <div class="main-container">
+         <header>
             <h1>YouTube Sync Player</h1>
-        </header>
-
-        <!-- Toggle View Button -->
-        <button id="toggleViewBtn" title="Enter Cinema Mode" aria-pressed="false">
-             <i class="fas fa-expand"></i> Cinema Mode <!-- Text updated by JS -->
-        </button>
-
-        <!-- MOVED: Sync Toggle Checkbox Container -->
-        <div id="syncToggleContainer">
+         </header>
+         <!-- Toggle View Button -->
+         <button id="toggleViewBtn" title="Enter Cinema Mode" aria-pressed="false">
+            <i class="fas fa-expand"></i> Cinema Mode <!-- Text updated by JS -->
+         </button>
+         <!-- MOVED: Sync Toggle Checkbox Container -->
+         <div id="syncToggleContainer">
             <div class="sync-toggle-group">
-                 <input type="checkbox" id="syncToggleCheckbox" checked>
-                 <label for="syncToggleCheckbox">Sync Enabled</label>
+               <input type="checkbox" id="syncToggleCheckbox" checked>
+               <label for="syncToggleCheckbox">Sync Enabled</label>
             </div>
-        </div>
-
-        <section class="controls-section">
+         </div>
+         <section class="controls-section">
             <!-- Video ID Input Groups -->
             <div class="input-group">
-                <label for="videoId1">Left Video (URL or ID):</label>
-                <input type="text" id="videoId1" placeholder="Video URL or ID (e.g., dQw4w9WgXcQ)">
+               <label for="videoId1">Left Video (URL or ID):</label>
+               <input type="text" id="videoId1" placeholder="Video URL or ID (e.g., dQw4w9WgXcQ)">
             </div>
             <div class="input-group">
-                <label for="videoId2">Right Video (URL or ID):</label>
-                <input type="text" id="videoId2" placeholder="Video URL or ID (e.g., QH2-TGUlwu4)">
+               <label for="videoId2">Right Video (URL or ID):</label>
+               <input type="text" id="videoId2" placeholder="Video URL or ID (e.g., QH2-TGUlwu4)">
             </div>
-
             <!-- Load Button -->
             <button id="loadVideosBtn">Load Videos</button>
-
             <!-- Input Hint -->
             <p class="input-hint">Enter a YouTube Video URL or just the Video ID.</p>
-        </section>
-
-        <p class="status" id="status">Loading API...</p>
-
-        <!-- ======================================= -->
-        <!-- == Central Playback Controls UI == -->
-        <!-- ======================================= -->
-        <section id="centralControls" class="central-controls-container controls-disabled">
-             <div class="central-controls-buttons">
-                <button id="centralSkipBackwardBtn" title="Skip Backward 5s"><i class="fas fa-backward-step"></i></button>
-                <button id="centralPlayPauseBtn" title="Play"><i class="fas fa-play"></i></button>
-                <button id="centralSkipForwardBtn" title="Skip Forward 5s"><i class="fas fa-forward-step"></i></button>
+         </section>
+         <p class="status" id="status">Loading API...</p>
+         <!-- ======================================= -->
+         <!-- == Central Playback Controls UI == -->
+         <!-- ======================================= -->
+         <section id="centralControls" class="central-controls-container controls-disabled">
+            <div class="central-controls-buttons">
+               <button id="centralSkipBackwardBtn" title="Skip Backward 5s"><i class="fas fa-backward-step"></i></button>
+               <button id="centralPlayPauseBtn" title="Play"><i class="fas fa-play"></i></button>
+               <button id="centralSkipForwardBtn" title="Skip Forward 5s"><i class="fas fa-forward-step"></i></button>
             </div>
             <div class="central-controls-seeker">
-                <span id="centralCurrentTime">0:00</span>
-                <input type="range" id="centralSeekBar" value="0" min="0" max="100" step="0.1">
-                <span id="centralDuration">0:00</span>
+               <span id="centralCurrentTime">0:00</span>
+               <input type="range" id="centralSeekBar" value="0" min="0" max="100" step="0.1">
+               <span id="centralDuration">0:00</span>
             </div>
-        </section>
-        <!-- ======================================= -->
-        <!-- ======================================= -->
-
-
-        <main class="players-container">
+         </section>
+         <!-- ======================================= -->
+         <!-- ======================================= -->
+         <main class="players-container">
             <div class="video-wrapper">
-                <h2>Left Video</h2>
-                <div id="player1" class="player-placeholder"></div>
+               <h2>Left Video</h2>
+               <div id="player1" class="player-placeholder"></div>
             </div>
             <div class="video-wrapper">
-                <h2>Right Video</h2>
-                <div id="player2" class="player-placeholder"></div>
+               <h2>Right Video</h2>
+               <div id="player2" class="player-placeholder"></div>
             </div>
-        </main>
-
-    </div> <!-- /main-container -->
-
-    <!-- YouTube IFrame Player API -->
-    <script src="https://www.youtube.com/iframe_api"></script>
-    <!-- Our Custom Script -->
-    <script src="script.js"></script>
-</body>
+         </main>
+      </div>
+      <!-- /main-container -->
+      <!-- YouTube IFrame Player API -->
+      <script src="https://www.youtube.com/iframe_api"></script>
+      <!-- Our Custom Script -->
+      <script src="script.js"></script>
+   </body>
 </html>

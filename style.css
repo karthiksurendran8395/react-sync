@@ -1,287 +1,742 @@
 /* --- Variables and Reset --- */
-:root {
-    --primary-color: #007bff; /* Vibrant Blue */
-    --primary-hover: #0056b3;
-    --secondary-color: #6c757d; /* Medium Gray */
-    --light-gray: #f8f9fa;     /* Very Light Gray (Background) */
-    --dark-gray: #343a40;      /* Dark Gray (Text) */
-    --white: #ffffff;
-    --border-color: #dee2e6;   /* Light Border Color */
-    --shadow-color: rgba(0, 0, 0, 0.1);
-    --cinema-bg: rgba(25, 25, 25, 0.85); /* Semi-transparent dark background for cinema controls */
-
-    --font-primary: 'Roboto', sans-serif;
-    --font-headings: 'Poppins', sans-serif;
+ :root {
+     --primary-color: #007bff;
+    /* Vibrant Blue */
+     --primary-hover: #0056b3;
+     --secondary-color: #6c757d;
+    /* Medium Gray */
+     --light-gray: #f8f9fa;
+    /* Very Light Gray (Background) */
+     --dark-gray: #343a40;
+    /* Dark Gray (Text) */
+     --white: #ffffff;
+     --border-color: #dee2e6;
+    /* Light Border Color */
+     --shadow-color: rgba(0, 0, 0, 0.1);
+     --cinema-bg: rgba(25, 25, 25, 0.85);
+    /* Semi-transparent dark background for cinema controls */
+     --font-primary: 'Roboto', sans-serif;
+     --font-headings: 'Poppins', sans-serif;
 }
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+ * {
+     margin: 0;
+     padding: 0;
+     box-sizing: border-box;
 }
-
 /* --- Base Styles --- */
-html {
-    height: 100%; /* Ensure html takes full height */
+ html {
+     height: 100%;
+    /* Ensure html takes full height */
 }
-
-body {
-    font-family: var(--font-primary);
-    background-color: var(--light-gray);
-    color: var(--dark-gray);
-    line-height: 1.6;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start; /* Align container to top */
-    padding: 20px;
-    min-height: 100vh; /* Ensure body covers viewport */
-    height: 100%; /* Allow body to size correctly */
-    transition: padding 0.3s ease, background-color 0.3s ease;
-    overflow-x: hidden; /* Prevent horizontal scroll */
+ body {
+     font-family: var(--font-primary);
+     background-color: var(--light-gray);
+     color: var(--dark-gray);
+     line-height: 1.6;
+     display: flex;
+     justify-content: center;
+     align-items: flex-start;
+    /* Align container to top */
+     padding: 20px;
+     min-height: 100vh;
+    /* Ensure body covers viewport */
+     height: 100%;
+    /* Allow body to size correctly */
+     transition: padding 0.3s ease, background-color 0.3s ease;
+     overflow-x: hidden;
+    /* Prevent horizontal scroll */
 }
-
 /* Class added to body when controls are hidden (Cinema Mode Active) */
-body.fullscreen-active {
-    padding: 0; /* Remove padding */
-    background-color: #000; /* Black background */
-    overflow: hidden; /* Hide scrollbars */
-    align-items: center; /* Center the container vertically in fullscreen */
+ body.fullscreen-active {
+     padding: 0;
+    /* Remove padding */
+     background-color: #000;
+    /* Black background */
+     overflow: hidden;
+    /* Hide scrollbars */
+     align-items: center;
+    /* Center the container vertically in fullscreen */
 }
-
-.main-container {
-    background-color: var(--white);
-    padding: 30px 40px;
-    border-radius: 12px;
-    box-shadow: 0 5px 15px var(--shadow-color);
-    width: 100%;
-    max-width: 1400px; /* Max width for large screens */
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Center content horizontally */
-    position: relative; /* Needed for absolute positioning of buttons */
-    transition: padding 0.3s ease, max-width 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease, border-radius 0.3s ease, opacity 0.3s ease, height 0.3s ease;
-    margin: auto 0; /* Vertical centering using flex on body */
+ .main-container {
+     background-color: var(--white);
+     padding: 30px 40px;
+     border-radius: 12px;
+     box-shadow: 0 5px 15px var(--shadow-color);
+     width: 100%;
+     max-width: 1400px;
+    /* Max width for large screens */
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+    /* Center content horizontally */
+     position: relative;
+    /* Needed for absolute positioning of buttons */
+     transition: padding 0.3s ease, max-width 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease, border-radius 0.3s ease, opacity 0.3s ease, height 0.3s ease;
+     margin: auto 0;
+    /* Vertical centering using flex on body */
 }
-
 /* --- Header --- */
-header {
+ header {
      width: 100%;
      margin-bottom: 30px;
      text-align: center;
      transition: margin-bottom 0.3s ease, opacity 0.3s ease, height 0.3s ease, visibility 0s linear 0.3s;
-     height: auto; opacity: 1; visibility: visible;
+     height: auto;
+     opacity: 1;
+     visibility: visible;
 }
-header h1 {
-    font-family: var(--font-headings); font-weight: 600; color: var(--primary-color); margin: 0;
+ header h1 {
+     font-family: var(--font-headings);
+     font-weight: 600;
+     color: var(--primary-color);
+     margin: 0;
 }
-
 /* --- Toggle View Button (Cinema Mode Toggle) --- */
-#toggleViewBtn {
-    position: absolute; top: 25px; right: 30px; padding: 8px 12px;
-    background-color: rgba(108, 117, 125, 0.8); color: var(--white);
-    border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem;
-    transition: background-color 0.2s ease, transform 0.1s ease, top 0.3s ease, right 0.3s ease, opacity 0.3s ease;
-    z-index: 1002; /* Ensure above fixed controls */ display: flex; align-items: center; gap: 6px; opacity: 1;
+ #toggleViewBtn {
+     position: absolute;
+     top: 25px;
+     right: 30px;
+     padding: 8px 12px;
+     background-color: rgba(108, 117, 125, 0.8);
+     color: var(--white);
+     border: none;
+     border-radius: 6px;
+     cursor: pointer;
+     font-size: 0.9rem;
+     transition: background-color 0.2s ease, transform 0.1s ease, top 0.3s ease, right 0.3s ease, opacity 0.3s ease;
+     z-index: 1002;
+    /* Ensure above fixed controls */
+     display: flex;
+     align-items: center;
+     gap: 6px;
+     opacity: 1;
 }
-#toggleViewBtn:hover {
-    background-color: rgba(52, 58, 64, 0.9); transform: translateY(-1px);
+ #toggleViewBtn:hover {
+     background-color: rgba(52, 58, 64, 0.9);
+     transform: translateY(-1px);
 }
-#toggleViewBtn i { font-size: 1em; line-height: 1; }
-
+ #toggleViewBtn i {
+     font-size: 1em;
+     line-height: 1;
+}
 /* --- Sync Toggle Container --- */
-#syncToggleContainer {
-    position: absolute; top: 70px; right: 30px; z-index: 1002; /* Ensure above fixed controls */
-    background-color: rgba(108, 117, 125, 0.8); padding: 6px 10px; border-radius: 6px;
-    transition: background-color 0.2s ease, top 0.3s ease, right 0.3s ease, opacity 0.3s ease; opacity: 1;
+ #syncToggleContainer {
+     position: absolute;
+     top: 70px;
+     right: 30px;
+     z-index: 1002;
+    /* Ensure above fixed controls */
+     background-color: rgba(108, 117, 125, 0.8);
+     padding: 6px 10px;
+     border-radius: 6px;
+     transition: background-color 0.2s ease, top 0.3s ease, right 0.3s ease, opacity 0.3s ease;
+     opacity: 1;
 }
-#syncToggleContainer:hover { background-color: rgba(52, 58, 64, 0.9); }
-.sync-toggle-group { display: flex; align-items: center; gap: 8px; }
-.sync-toggle-group input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary-color); flex-shrink: 0; margin: 0; }
-.sync-toggle-group label { font-size: 0.85rem; color: var(--white); cursor: pointer; user-select: none; line-height: 1; font-weight: 500; }
-
+ #syncToggleContainer:hover {
+     background-color: rgba(52, 58, 64, 0.9);
+}
+ .sync-toggle-group {
+     display: flex;
+     align-items: center;
+     gap: 8px;
+}
+ .sync-toggle-group input[type="checkbox"] {
+     width: 16px;
+     height: 16px;
+     cursor: pointer;
+     accent-color: var(--primary-color);
+     flex-shrink: 0;
+     margin: 0;
+}
+ .sync-toggle-group label {
+     font-size: 0.85rem;
+     color: var(--white);
+     cursor: pointer;
+     user-select: none;
+     line-height: 1;
+     font-weight: 500;
+}
 /* --- Controls Section (Inputs and Load Button) --- */
-.controls-section {
-    display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end;
-    gap: 15px 20px; row-gap: 20px; margin-bottom: 20px; padding: 20px;
-    background-color: var(--light-gray); border-radius: 8px; width: 100%; max-width: 800px;
-    border: 1px solid var(--border-color);
-    transition: margin-bottom 0.3s ease, opacity 0.3s ease, height 0.3s ease, padding 0.3s ease, border 0.3s ease, visibility 0s linear 0.3s;
-    height: auto; opacity: 1; visibility: visible;
+ .controls-section {
+     display: flex;
+     flex-wrap: wrap;
+     justify-content: center;
+     align-items: flex-end;
+     gap: 15px 20px;
+     row-gap: 20px;
+     margin-bottom: 20px;
+     padding: 20px;
+     background-color: var(--light-gray);
+     border-radius: 8px;
+     width: 100%;
+     max-width: 800px;
+     border: 1px solid var(--border-color);
+     transition: margin-bottom 0.3s ease, opacity 0.3s ease, height 0.3s ease, padding 0.3s ease, border 0.3s ease, visibility 0s linear 0.3s;
+     height: auto;
+     opacity: 1;
+     visibility: visible;
 }
-.input-group { display: flex; flex-direction: column; gap: 5px; flex-grow: 1; min-width: 200px; }
-.input-group label { font-weight: 500; font-size: 0.9rem; color: var(--secondary-color); margin-bottom: 2px; }
-.input-group input[type="text"] { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem; width: 100%; transition: border-color 0.2s ease, box-shadow 0.2s ease; height: 41px; }
-.input-group input[type="text"]:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25); }
-.controls-section button#loadVideosBtn { padding: 10px 25px; background-color: var(--primary-color); color: var(--white); border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 500; transition: background-color 0.2s ease, transform 0.1s ease, opacity 0.3s ease; margin-top: 0; height: 41px; line-height: 1.4; flex-shrink: 0; margin-left: 15px; }
-.controls-section button#loadVideosBtn:hover { background-color: var(--primary-hover); transform: translateY(-1px); }
-.controls-section button#loadVideosBtn:disabled { background-color: var(--secondary-color); cursor: not-allowed; transform: none; opacity: 0.7; }
-.input-hint { font-size: 0.85rem; color: var(--secondary-color); text-align: center; width: 100%; margin-top: 10px; flex-basis: 100%; order: 3; }
-
+ .input-group {
+     display: flex;
+     flex-direction: column;
+     gap: 5px;
+     flex-grow: 1;
+     min-width: 200px;
+}
+ .input-group label {
+     font-weight: 500;
+     font-size: 0.9rem;
+     color: var(--secondary-color);
+     margin-bottom: 2px;
+}
+ .input-group input[type="text"] {
+     padding: 10px 12px;
+     border: 1px solid var(--border-color);
+     border-radius: 6px;
+     font-size: 1rem;
+     width: 100%;
+     transition: border-color 0.2s ease, box-shadow 0.2s ease;
+     height: 41px;
+}
+ .input-group input[type="text"]:focus {
+     outline: none;
+     border-color: var(--primary-color);
+     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+ .controls-section button#loadVideosBtn {
+     padding: 10px 25px;
+     background-color: var(--primary-color);
+     color: var(--white);
+     border: none;
+     border-radius: 6px;
+     cursor: pointer;
+     font-size: 1rem;
+     font-weight: 500;
+     transition: background-color 0.2s ease, transform 0.1s ease, opacity 0.3s ease;
+     margin-top: 0;
+     height: 41px;
+     line-height: 1.4;
+     flex-shrink: 0;
+     margin-left: 15px;
+}
+ .controls-section button#loadVideosBtn:hover {
+     background-color: var(--primary-hover);
+     transform: translateY(-1px);
+}
+ .controls-section button#loadVideosBtn:disabled {
+     background-color: var(--secondary-color);
+     cursor: not-allowed;
+     transform: none;
+     opacity: 0.7;
+}
+ .input-hint {
+     font-size: 0.85rem;
+     color: var(--secondary-color);
+     text-align: center;
+     width: 100%;
+     margin-top: 10px;
+     flex-basis: 100%;
+     order: 3;
+}
 /* --- Status Message --- */
-.status {
-    text-align: center; margin: 15px 0 10px 0; font-style: italic; color: var(--secondary-color); min-height: 1.6em; width: 100%;
-    transition: margin-bottom 0.3s ease, opacity 0.3s ease, height 0.3s ease, visibility 0s linear 0.3s; height: auto; opacity: 1; visibility: visible;
+ .status {
+     text-align: center;
+     margin: 15px 0 10px 0;
+     font-style: italic;
+     color: var(--secondary-color);
+     min-height: 1.6em;
+     width: 100%;
+     transition: margin-bottom 0.3s ease, opacity 0.3s ease, height 0.3s ease, visibility 0s linear 0.3s;
+     height: auto;
+     opacity: 1;
+     visibility: visible;
 }
-
 /* --- Central Controls Styles --- */
-.central-controls-container {
-    width: 100%; max-width: 900px; padding: 15px 20px; background-color: var(--dark-gray); border-radius: 8px; margin-bottom: 25px;
-    display: flex; flex-direction: column; align-items: center; gap: 10px;
-    transition: opacity 0.3s ease, visibility 0.3s ease, height 0.3s ease, padding 0.3s ease, margin 0.3s ease, transform 0.3s ease, background-color 0.3s ease, border-radius 0.3s ease; /* Added more transitions */
-    opacity: 1; visibility: visible; height: auto; /* Default state */
-    position: relative; /* Default position */
-    transform: translateY(0); /* Default transform */
+ .central-controls-container {
+     width: 100%;
+     max-width: 900px;
+     padding: 15px 20px;
+     background-color: var(--dark-gray);
+     border-radius: 8px;
+     margin-bottom: 25px;
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     gap: 10px;
+     transition: opacity 0.3s ease, visibility 0.3s ease, height 0.3s ease, padding 0.3s ease, margin 0.3s ease, transform 0.3s ease, background-color 0.3s ease, border-radius 0.3s ease;
+    /* Added more transitions */
+     opacity: 1;
+     visibility: visible;
+     height: auto;
+    /* Default state */
+     position: relative;
+    /* Default position */
+     transform: translateY(0);
+    /* Default transform */
 }
-.central-controls-buttons { display: flex; justify-content: center; align-items: center; gap: 20px; }
-.central-controls-buttons button { background: none; border: none; color: var(--light-gray); font-size: 1.4rem; cursor: pointer; padding: 5px; transition: color 0.2s ease, transform 0.1s ease; line-height: 1; }
-.central-controls-buttons button:hover:not(:disabled) { color: var(--primary-color); transform: scale(1.1); }
-.central-controls-buttons button:disabled { color: var(--secondary-color) !important; cursor: not-allowed !important; transform: none !important; opacity: 0.6; }
-.central-controls-seeker { display: flex; align-items: center; width: 100%; gap: 10px; }
-.central-controls-seeker span { color: var(--light-gray); font-size: 0.85rem; min-width: 40px; text-align: center; }
-#centralSeekBar { flex-grow: 1; cursor: pointer; height: 8px; background-color: var(--secondary-color); border-radius: 4px; -webkit-appearance: none; appearance: none; outline: none; transition: opacity 0.2s ease; }
-#centralSeekBar:disabled { cursor: not-allowed; opacity: 0.6; }
-#centralSeekBar::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; background-color: var(--primary-color); border-radius: 50%; cursor: pointer; transition: background-color 0.2s ease; }
-#centralSeekBar:hover:not(:disabled)::-webkit-slider-thumb { background-color: var(--primary-hover); }
-#centralSeekBar:active:not(:disabled)::-webkit-slider-thumb { background-color: var(--primary-hover); }
-#centralSeekBar:disabled::-webkit-slider-thumb { background-color: var(--secondary-color); cursor: not-allowed; }
-#centralSeekBar::-moz-range-thumb { width: 16px; height: 16px; background-color: var(--primary-color); border-radius: 50%; cursor: pointer; border: none; transition: background-color 0.2s ease; }
-#centralSeekBar:hover:not(:disabled)::-moz-range-thumb { background-color: var(--primary-hover); }
-#centralSeekBar:active:not(:disabled)::-moz-range-thumb { background-color: var(--primary-hover); }
-#centralSeekBar:disabled::-moz-range-thumb { background-color: var(--secondary-color); cursor: not-allowed; }
-#centralSeekBar::-moz-range-track { width: 100%; height: 8px; cursor: pointer; background: var(--secondary-color); border-radius: 4px; }
-#centralSeekBar:disabled::-moz-range-track { cursor: not-allowed; }
-
+ .central-controls-buttons {
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     gap: 20px;
+}
+ .central-controls-buttons button {
+     background: none;
+     border: none;
+     color: var(--light-gray);
+     font-size: 1.4rem;
+     cursor: pointer;
+     padding: 5px;
+     transition: color 0.2s ease, transform 0.1s ease;
+     line-height: 1;
+}
+ .central-controls-buttons button:hover:not(:disabled) {
+     color: var(--primary-color);
+     transform: scale(1.1);
+}
+ .central-controls-buttons button:disabled {
+     color: var(--secondary-color) !important;
+     cursor: not-allowed !important;
+     transform: none !important;
+     opacity: 0.6;
+}
+ .central-controls-seeker {
+     display: flex;
+     align-items: center;
+     width: 100%;
+     gap: 10px;
+}
+ .central-controls-seeker span {
+     color: var(--light-gray);
+     font-size: 0.85rem;
+     min-width: 40px;
+     text-align: center;
+}
+ #centralSeekBar {
+     flex-grow: 1;
+     cursor: pointer;
+     height: 8px;
+     background-color: var(--secondary-color);
+     border-radius: 4px;
+     -webkit-appearance: none;
+     appearance: none;
+     outline: none;
+     transition: opacity 0.2s ease;
+}
+ #centralSeekBar:disabled {
+     cursor: not-allowed;
+     opacity: 0.6;
+}
+ #centralSeekBar::-webkit-slider-thumb {
+     -webkit-appearance: none;
+     appearance: none;
+     width: 16px;
+     height: 16px;
+     background-color: var(--primary-color);
+     border-radius: 50%;
+     cursor: pointer;
+     transition: background-color 0.2s ease;
+}
+ #centralSeekBar:hover:not(:disabled)::-webkit-slider-thumb {
+     background-color: var(--primary-hover);
+}
+ #centralSeekBar:active:not(:disabled)::-webkit-slider-thumb {
+     background-color: var(--primary-hover);
+}
+ #centralSeekBar:disabled::-webkit-slider-thumb {
+     background-color: var(--secondary-color);
+     cursor: not-allowed;
+}
+ #centralSeekBar::-moz-range-thumb {
+     width: 16px;
+     height: 16px;
+     background-color: var(--primary-color);
+     border-radius: 50%;
+     cursor: pointer;
+     border: none;
+     transition: background-color 0.2s ease;
+}
+ #centralSeekBar:hover:not(:disabled)::-moz-range-thumb {
+     background-color: var(--primary-hover);
+}
+ #centralSeekBar:active:not(:disabled)::-moz-range-thumb {
+     background-color: var(--primary-hover);
+}
+ #centralSeekBar:disabled::-moz-range-thumb {
+     background-color: var(--secondary-color);
+     cursor: not-allowed;
+}
+ #centralSeekBar::-moz-range-track {
+     width: 100%;
+     height: 8px;
+     cursor: pointer;
+     background: var(--secondary-color);
+     border-radius: 4px;
+}
+ #centralSeekBar:disabled::-moz-range-track {
+     cursor: not-allowed;
+}
 /* --- Disabled State for Central Controls (when sync is OFF or no overlap) --- */
-.central-controls-container.controls-disabled {
-    opacity: 0; pointer-events: none; visibility: hidden; height: 0; padding: 0; margin: 0; border: 0; overflow: hidden;
-    transform: translateY(20px); /* Add slight slide down effect */
+ .central-controls-container.controls-disabled {
+     opacity: 0;
+     pointer-events: none;
+     visibility: hidden;
+     height: 0;
+     padding: 0;
+     margin: 0;
+     border: 0;
+     overflow: hidden;
+     transform: translateY(20px);
+    /* Add slight slide down effect */
 }
-
 /* --- Players Area --- */
-.players-container { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; width: 100%; transition: margin-top 0.3s ease, gap 0.3s ease, width 0.3s ease, height 0.3s ease, padding-bottom 0.3s ease; /* Added padding transition */ }
-.video-wrapper { flex: 1 1 45%; min-width: 320px; max-width: 700px; display: flex; flex-direction: column; align-items: center; transition: max-width 0.3s ease, flex-basis 0.3s ease, min-width 0.3s ease, height 0.3s ease, width 0.3s ease; }
-.video-wrapper h2 { font-family: var(--font-headings); font-weight: 600; font-size: 1.3rem; color: var(--dark-gray); margin-bottom: 15px; text-align: center; transition: opacity 0.3s ease, height 0.3s ease, margin 0.3s ease, visibility 0s linear 0.3s; height: auto; opacity: 1; visibility: visible; }
-.player-placeholder, .video-wrapper iframe { width: 100%; aspect-ratio: 16 / 9; border: 1px solid var(--border-color); border-radius: 8px; background-color: #eee; box-shadow: 0 3px 8px var(--shadow-color); transition: border 0.3s ease, border-radius 0.3s ease, box-shadow 0.3s ease, height 0.3s ease, aspect-ratio 0.3s ease, background-color 0.3s ease; display: block; }
-.video-wrapper iframe { background-color: #000; }
-
-/* =================================================== */
-/* === Styles when CINEMA MODE is active           === */
-/* =================================================== */
-.main-container.controls-hidden { /* controls-hidden is now Cinema Mode */
-    max-width: none; width: 100%; height: 100%; padding: 0; background: transparent; box-shadow: none; border-radius: 0; margin: 0; opacity: 1; overflow: hidden;
+ .players-container {
+     display: flex;
+     justify-content: center;
+     gap: 30px;
+     flex-wrap: wrap;
+     width: 100%;
+     transition: margin-top 0.3s ease, gap 0.3s ease, width 0.3s ease, height 0.3s ease, padding-bottom 0.3s ease;
+    /* Added padding transition */
 }
-
+ .video-wrapper {
+     flex: 1 1 45%;
+     min-width: 320px;
+     max-width: 700px;
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     transition: max-width 0.3s ease, flex-basis 0.3s ease, min-width 0.3s ease, height 0.3s ease, width 0.3s ease;
+}
+ .video-wrapper h2 {
+     font-family: var(--font-headings);
+     font-weight: 600;
+     font-size: 1.3rem;
+     color: var(--dark-gray);
+     margin-bottom: 15px;
+     text-align: center;
+     transition: opacity 0.3s ease, height 0.3s ease, margin 0.3s ease, visibility 0s linear 0.3s;
+     height: auto;
+     opacity: 1;
+     visibility: visible;
+}
+ .player-placeholder, .video-wrapper iframe {
+     width: 100%;
+     aspect-ratio: 16 / 9;
+     border: 1px solid var(--border-color);
+     border-radius: 8px;
+     background-color: #eee;
+     box-shadow: 0 3px 8px var(--shadow-color);
+     transition: border 0.3s ease, border-radius 0.3s ease, box-shadow 0.3s ease, height 0.3s ease, aspect-ratio 0.3s ease, background-color 0.3s ease;
+     display: block;
+}
+ .video-wrapper iframe {
+     background-color: #000;
+}
+/* =================================================== */
+/* === Styles when CINEMA MODE is active === */
+/* =================================================== */
+ .main-container.controls-hidden {
+    /* controls-hidden is now Cinema Mode */
+     max-width: none;
+     width: 100%;
+     height: 100%;
+     padding: 0;
+     background: transparent;
+     box-shadow: none;
+     border-radius: 0;
+     margin: 0;
+     opacity: 1;
+     overflow: hidden;
+}
 /* Hide header, INPUT controls, status, video titles smoothly */
-.main-container.controls-hidden header,
-.main-container.controls-hidden .controls-section, /* Hide input section */
-.main-container.controls-hidden .status,
-.main-container.controls-hidden .video-wrapper h2 {
-    opacity: 0; visibility: hidden; height: 0; margin: 0; padding: 0; border: 0; overflow: hidden; position: absolute; z-index: -1;
-    transition: opacity 0.3s ease, visibility 0s linear 0.3s, height 0.3s ease, margin 0.3s ease, padding 0.3s ease;
+ .main-container.controls-hidden header, .main-container.controls-hidden .controls-section, 
+/* Hide input section */
+ .main-container.controls-hidden .status, .main-container.controls-hidden .video-wrapper h2 {
+     opacity: 0;
+     visibility: hidden;
+     height: 0;
+     margin: 0;
+     padding: 0;
+     border: 0;
+     overflow: hidden;
+     position: absolute;
+     z-index: -1;
+     transition: opacity 0.3s ease, visibility 0s linear 0.3s, height 0.3s ease, margin 0.3s ease, padding 0.3s ease;
 }
-
 /* --- Keep Central Controls VISIBLE and position FIXED at bottom in Cinema Mode --- */
-.main-container.controls-hidden #centralControls {
-    opacity: 1; /* Keep visible */
-    visibility: visible; /* Keep visible */
-    height: auto; /* Keep height */
-    position: fixed; /* Position relative to viewport */
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    max-width: none; /* Override max-width */
-    background-color: var(--cinema-bg); /* Use semi-transparent background */
-    border-radius: 0; /* Remove border-radius */
-    padding: 10px 20px; /* Adjust padding for fixed view */
-    z-index: 1001; /* Ensure above players */
-    margin-bottom: 0; /* Remove margin */
-    transform: translateY(0); /* Ensure it's not translated */
+ .main-container.controls-hidden #centralControls {
+     opacity: 1;
+    /* Keep visible */
+     visibility: visible;
+    /* Keep visible */
+     height: auto;
+    /* Keep height */
+     position: fixed;
+    /* Position relative to viewport */
+     bottom: 0;
+     left: 0;
+     right: 0;
+     width: 100%;
+     max-width: none;
+    /* Override max-width */
+     background-color: var(--cinema-bg);
+    /* Use semi-transparent background */
+     border-radius: 0;
+    /* Remove border-radius */
+     padding: 10px 20px;
+    /* Adjust padding for fixed view */
+     z-index: 1001;
+    /* Ensure above players */
+     margin-bottom: 0;
+    /* Remove margin */
+     transform: translateY(0);
+    /* Ensure it's not translated */
     /* Prevent transition glitches when hiding other elements */
-     transition: background-color 0.3s ease, padding 0.3s ease, opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease; /* Add transitions for smooth hide/show if disabled */
+     transition: background-color 0.3s ease, padding 0.3s ease, opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+    /* Add transitions for smooth hide/show if disabled */
 }
 /* Style disabled state when in Cinema Mode */
-.main-container.controls-hidden #centralControls.controls-disabled {
-    opacity: 0; visibility: hidden; height: 0; padding: 0; margin: 0; border: 0; overflow: hidden;
-    transform: translateY(100%); /* Slide down when disabled */
+ .main-container.controls-hidden #centralControls.controls-disabled {
+     opacity: 0;
+     visibility: hidden;
+     height: 0;
+     padding: 0;
+     margin: 0;
+     border: 0;
+     overflow: hidden;
+     transform: translateY(100%);
+    /* Slide down when disabled */
 }
-
-
 /* Adjust toggle buttons positions for cinema mode */
-.main-container.controls-hidden #toggleViewBtn,
-.main-container.controls-hidden #syncToggleContainer {
-    position: fixed; opacity: 0.8; background-color: rgba(108, 117, 125, 0.8);
+ .main-container.controls-hidden #toggleViewBtn, .main-container.controls-hidden #syncToggleContainer {
+     position: fixed;
+     opacity: 0.8;
+     background-color: rgba(108, 117, 125, 0.8);
 }
-.main-container.controls-hidden #toggleViewBtn { top: 15px; right: 15px; }
-.main-container.controls-hidden #syncToggleContainer { top: 60px; right: 15px; }
-.main-container.controls-hidden #toggleViewBtn:hover,
-.main-container.controls-hidden #syncToggleContainer:hover { opacity: 1; background-color: rgba(52, 58, 64, 0.9); }
-
+ .main-container.controls-hidden #toggleViewBtn {
+     top: 15px;
+     right: 15px;
+}
+ .main-container.controls-hidden #syncToggleContainer {
+     top: 60px;
+     right: 15px;
+}
+ .main-container.controls-hidden #toggleViewBtn:hover, .main-container.controls-hidden #syncToggleContainer:hover {
+     opacity: 1;
+     background-color: rgba(52, 58, 64, 0.9);
+}
 /* Player layout for cinema mode */
-.main-container.controls-hidden .players-container { margin-top: 0; gap: 0; width: 100%; height: 100%; flex-wrap: nowrap; background-color: #000; padding-bottom: 70px; /* Add padding to prevent overlap with fixed controls */ }
-.main-container.controls-hidden .video-wrapper { flex-basis: 50%; max-width: 50%; min-width: 0; height: 100%; width: 50%; }
-.main-container.controls-hidden .player-placeholder,
-.main-container.controls-hidden .video-wrapper iframe { border: none; border-radius: 0; box-shadow: none; height: 100%; width: 100%; aspect-ratio: auto; background-color: #000; }
-
-/* =================================================== */
-/* === Responsive Adjustments                      === */
-/* =================================================== */
-@media (max-width: 768px) {
-    /* === Normal Mode Responsive (Tablet) === */
-    body:not(.fullscreen-active) { padding: 10px; }
-    .main-container:not(.controls-hidden) { padding: 20px; }
-    header:not(.main-container.controls-hidden header) h1 { font-size: 1.8rem; }
-    .controls-section:not(.main-container.controls-hidden .controls-section) { padding: 15px; gap: 15px; align-items: stretch; }
-    .input-group:not(.main-container.controls-hidden .input-group) { width: 100%; min-width: auto; }
-    .input-group input[type="text"]:not(.main-container.controls-hidden .input-group input) { width: 100%; }
-    .controls-section button#loadVideosBtn:not(.main-container.controls-hidden button#loadVideosBtn) { width: 100%; margin-top: 15px; margin-left: 0; padding: 12px 20px; height: auto; order: 2; }
-    .input-hint:not(.main-container.controls-hidden .input-hint) { margin-top: 15px; order: 3; }
-    /* Normal Central Controls */
-    .central-controls-container:not(.main-container.controls-hidden #centralControls):not(.controls-disabled) { padding: 10px 15px; gap: 8px; }
-    .central-controls-buttons:not(.main-container.controls-hidden .central-controls-buttons) { gap: 15px; }
-    .central-controls-buttons button:not(.main-container.controls-hidden .central-controls-buttons button) { font-size: 1.3rem; }
-    .central-controls-seeker:not(.main-container.controls-hidden .central-controls-seeker) { gap: 8px; }
-    .central-controls-seeker span:not(.main-container.controls-hidden .central-controls-seeker span) { font-size: 0.8rem; min-width: 35px; }
-    /* Normal Players */
-    .players-container:not(.main-container.controls-hidden .players-container) { gap: 20px; flex-direction: column; align-items: center; padding-bottom: 0; /* Reset padding */ }
-    .video-wrapper:not(.main-container.controls-hidden .video-wrapper) { flex-basis: 100%; max-width: 600px; width: 100%; }
-    /* Normal Buttons */
-     #toggleViewBtn:not(.main-container.controls-hidden #toggleViewBtn) { top: 15px; right: 15px; padding: 6px 10px; font-size: 0.8rem; }
-      #syncToggleContainer:not(.main-container.controls-hidden #syncToggleContainer) { top: 55px; right: 15px; padding: 5px 8px; }
-     .sync-toggle-group label:not(.main-container.controls-hidden .sync-toggle-group label) { font-size: 0.8rem; }
-     .sync-toggle-group input[type=checkbox]:not(.main-container.controls-hidden .sync-toggle-group input) { width: 14px; height: 14px; }
-
-    /* === Cinema Mode Responsive (Tablet/Mobile - Stack Vertically) === */
-    .main-container.controls-hidden .players-container { flex-direction: column; padding-bottom: 80px; /* Increased padding for taller fixed controls */}
-    .main-container.controls-hidden .video-wrapper { flex-basis: 50%; width: 100%; max-width: 100%; height: 50%; }
-    /* Cinema Mode Fixed Controls Responsive */
-    .main-container.controls-hidden #centralControls { padding: 8px 15px; gap: 5px; }
-    .main-container.controls-hidden #centralControls .central-controls-seeker { flex-wrap: wrap; justify-content: center; gap: 5px; } /* Allow wrap */
-    .main-container.controls-hidden #centralControls #centralSeekBar { flex-basis: 100%; order: 1; height: 6px; } /* Seeker full width */
-    .main-container.controls-hidden #centralControls .central-controls-seeker span { order: 2; font-size: 0.75rem; min-width: 30px; } /* Times below */
-
-     /* Cinema Mode Buttons Responsive */
-     .main-container.controls-hidden #toggleViewBtn { top: 10px; right: 10px; }
-     .main-container.controls-hidden #syncToggleContainer { top: 50px; right: 10px; }
+ .main-container.controls-hidden .players-container {
+     margin-top: 0;
+     gap: 0;
+     width: 100%;
+     height: 100%;
+     flex-wrap: nowrap;
+     background-color: #000;
+     padding-bottom: 70px;
+    /* Add padding to prevent overlap with fixed controls */
 }
-
-@media (max-width: 480px) {
-     /* === Normal Mode Responsive (Mobile) === */
-     header:not(.main-container.controls-hidden header) h1 { font-size: 1.5rem; }
-     .main-container:not(.controls-hidden) { padding: 15px; border-radius: 8px; }
-     .video-wrapper h2:not(.main-container.controls-hidden h2) { font-size: 1.1rem; }
-     /* Normal Central Controls Mobile */
-     .central-controls-buttons button:not(.main-container.controls-hidden .central-controls-buttons button) { font-size: 1.2rem; }
-     .central-controls-seeker:not(.main-container.controls-hidden .central-controls-seeker) { flex-wrap: wrap; justify-content: center; gap: 5px; }
-     #centralSeekBar:not(.main-container.controls-hidden #centralSeekBar) { flex-basis: 100%; order: 1; height: 6px;}
-     .central-controls-seeker span:not(.main-container.controls-hidden .central-controls-seeker span) { order: 2; font-size: 0.75rem; min-width: 30px; }
-     /* Normal Buttons Mobile */
-     #toggleViewBtn:not(.main-container.controls-hidden #toggleViewBtn) { top: 10px; right: 10px; }
-     #syncToggleContainer:not(.main-container.controls-hidden #syncToggleContainer) { top: 48px; right: 10px;}
-
-     /* Cinema Mode adjustments for mobile mostly covered by 768px breakpoint */
-     .main-container.controls-hidden .players-container { padding-bottom: 90px; /* Slightly more padding */ }
-     .main-container.controls-hidden #centralControls { padding: 6px 10px; } /* Tighter padding */
-     .main-container.controls-hidden #centralControls .central-controls-buttons { gap: 10px; } /* Tighter button gap */
-
+ .main-container.controls-hidden .video-wrapper {
+     flex-basis: 50%;
+     max-width: 50%;
+     min-width: 0;
+     height: 100%;
+     width: 50%;
+}
+ .main-container.controls-hidden .player-placeholder, .main-container.controls-hidden .video-wrapper iframe {
+     border: none;
+     border-radius: 0;
+     box-shadow: none;
+     height: 100%;
+     width: 100%;
+     aspect-ratio: auto;
+     background-color: #000;
+}
+/* =================================================== */
+/* === Responsive Adjustments === */
+/* =================================================== */
+ @media (max-width: 768px) {
+    /* === Normal Mode Responsive (Tablet) === */
+     body:not(.fullscreen-active) {
+         padding: 10px;
+    }
+     .main-container:not(.controls-hidden) {
+         padding: 20px;
+    }
+     header:not(.main-container.controls-hidden header) h1 {
+         font-size: 1.8rem;
+    }
+     .controls-section:not(.main-container.controls-hidden .controls-section) {
+         padding: 15px;
+         gap: 15px;
+         align-items: stretch;
+    }
+     .input-group:not(.main-container.controls-hidden .input-group) {
+         width: 100%;
+         min-width: auto;
+    }
+     .input-group input[type="text"]:not(.main-container.controls-hidden .input-group input) {
+         width: 100%;
+    }
+     .controls-section button#loadVideosBtn:not(.main-container.controls-hidden button#loadVideosBtn) {
+         width: 100%;
+         margin-top: 15px;
+         margin-left: 0;
+         padding: 12px 20px;
+         height: auto;
+         order: 2;
+    }
+     .input-hint:not(.main-container.controls-hidden .input-hint) {
+         margin-top: 15px;
+         order: 3;
+    }
+    /* Normal Central Controls */
+     .central-controls-container:not(.main-container.controls-hidden #centralControls):not(.controls-disabled) {
+         padding: 10px 15px;
+         gap: 8px;
+    }
+     .central-controls-buttons:not(.main-container.controls-hidden .central-controls-buttons) {
+         gap: 15px;
+    }
+     .central-controls-buttons button:not(.main-container.controls-hidden .central-controls-buttons button) {
+         font-size: 1.3rem;
+    }
+     .central-controls-seeker:not(.main-container.controls-hidden .central-controls-seeker) {
+         gap: 8px;
+    }
+     .central-controls-seeker span:not(.main-container.controls-hidden .central-controls-seeker span) {
+         font-size: 0.8rem;
+         min-width: 35px;
+    }
+    /* Normal Players */
+     .players-container:not(.main-container.controls-hidden .players-container) {
+         gap: 20px;
+         flex-direction: column;
+         align-items: center;
+         padding-bottom: 0;
+        /* Reset padding */
+    }
+     .video-wrapper:not(.main-container.controls-hidden .video-wrapper) {
+         flex-basis: 100%;
+         max-width: 600px;
+         width: 100%;
+    }
+    /* Normal Buttons */
+     #toggleViewBtn:not(.main-container.controls-hidden #toggleViewBtn) {
+         top: 15px;
+         right: 15px;
+         padding: 6px 10px;
+         font-size: 0.8rem;
+    }
+     #syncToggleContainer:not(.main-container.controls-hidden #syncToggleContainer) {
+         top: 55px;
+         right: 15px;
+         padding: 5px 8px;
+    }
+     .sync-toggle-group label:not(.main-container.controls-hidden .sync-toggle-group label) {
+         font-size: 0.8rem;
+    }
+     .sync-toggle-group input[type=checkbox]:not(.main-container.controls-hidden .sync-toggle-group input) {
+         width: 14px;
+         height: 14px;
+    }
+    /* === Cinema Mode Responsive (Tablet/Mobile - Stack Vertically) === */
+     .main-container.controls-hidden .players-container {
+         flex-direction: column;
+         padding-bottom: 80px;
+        /* Increased padding for taller fixed controls */
+    }
+     .main-container.controls-hidden .video-wrapper {
+         flex-basis: 50%;
+         width: 100%;
+         max-width: 100%;
+         height: 50%;
+    }
+    /* Cinema Mode Fixed Controls Responsive */
+     .main-container.controls-hidden #centralControls {
+         padding: 8px 15px;
+         gap: 5px;
+    }
+     .main-container.controls-hidden #centralControls .central-controls-seeker {
+         flex-wrap: wrap;
+         justify-content: center;
+         gap: 5px;
+    }
+    /* Allow wrap */
+     .main-container.controls-hidden #centralControls #centralSeekBar {
+         flex-basis: 100%;
+         order: 1;
+         height: 6px;
+    }
+    /* Seeker full width */
+     .main-container.controls-hidden #centralControls .central-controls-seeker span {
+         order: 2;
+         font-size: 0.75rem;
+         min-width: 30px;
+    }
+    /* Times below */
+    /* Cinema Mode Buttons Responsive */
+     .main-container.controls-hidden #toggleViewBtn {
+         top: 10px;
+         right: 10px;
+    }
+     .main-container.controls-hidden #syncToggleContainer {
+         top: 50px;
+         right: 10px;
+    }
+}
+ @media (max-width: 480px) {
+    /* === Normal Mode Responsive (Mobile) === */
+     header:not(.main-container.controls-hidden header) h1 {
+         font-size: 1.5rem;
+    }
+     .main-container:not(.controls-hidden) {
+         padding: 15px;
+         border-radius: 8px;
+    }
+     .video-wrapper h2:not(.main-container.controls-hidden h2) {
+         font-size: 1.1rem;
+    }
+    /* Normal Central Controls Mobile */
+     .central-controls-buttons button:not(.main-container.controls-hidden .central-controls-buttons button) {
+         font-size: 1.2rem;
+    }
+     .central-controls-seeker:not(.main-container.controls-hidden .central-controls-seeker) {
+         flex-wrap: wrap;
+         justify-content: center;
+         gap: 5px;
+    }
+     #centralSeekBar:not(.main-container.controls-hidden #centralSeekBar) {
+         flex-basis: 100%;
+         order: 1;
+         height: 6px;
+    }
+     .central-controls-seeker span:not(.main-container.controls-hidden .central-controls-seeker span) {
+         order: 2;
+         font-size: 0.75rem;
+         min-width: 30px;
+    }
+    /* Normal Buttons Mobile */
+     #toggleViewBtn:not(.main-container.controls-hidden #toggleViewBtn) {
+         top: 10px;
+         right: 10px;
+    }
+     #syncToggleContainer:not(.main-container.controls-hidden #syncToggleContainer) {
+         top: 48px;
+         right: 10px;
+    }
+    /* Cinema Mode adjustments for mobile mostly covered by 768px breakpoint */
+     .main-container.controls-hidden .players-container {
+         padding-bottom: 90px;
+        /* Slightly more padding */
+    }
+     .main-container.controls-hidden #centralControls {
+         padding: 6px 10px;
+    }
+    /* Tighter padding */
+     .main-container.controls-hidden #centralControls .central-controls-buttons {
+         gap: 10px;
+    }
+    /* Tighter button gap */
 }
