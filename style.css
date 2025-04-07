@@ -258,7 +258,7 @@ header h1 {
     flex-direction: column;
     align-items: center;
     gap: 10px;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
+    transition: opacity 0.3s ease, visibility 0.3s ease, height 0.3s ease, padding 0.3s ease, margin 0.3s ease; /* Added transitions */
 }
 
 .central-controls-buttons {
@@ -279,14 +279,15 @@ header h1 {
     line-height: 1; /* Ensure icon alignment */
 }
 
-.central-controls-buttons button:hover {
+.central-controls-buttons button:hover:not(:disabled) { /* Disable hover effects when button is disabled */
     color: var(--primary-color);
     transform: scale(1.1);
 }
-.central-controls-buttons button:disabled {
-    color: var(--secondary-color);
-    cursor: not-allowed;
-    transform: none;
+.central-controls-buttons button:disabled { /* Style specifically for JS-disabled */
+    color: var(--secondary-color) !important; /* Override hover */
+    cursor: not-allowed !important;
+    transform: none !important;
+    opacity: 0.6;
 }
 
 .central-controls-seeker {
@@ -312,6 +313,11 @@ header h1 {
     -webkit-appearance: none; /* Override default look */
     appearance: none;
      outline: none;
+     transition: opacity 0.2s ease;
+}
+#centralSeekBar:disabled {
+     cursor: not-allowed;
+     opacity: 0.6;
 }
 /* --- Seek Bar Thumb Styling (Chrome/Safari/Edge) --- */
 #centralSeekBar::-webkit-slider-thumb {
@@ -324,8 +330,15 @@ header h1 {
     cursor: pointer;
     transition: background-color 0.2s ease;
 }
-#centralSeekBar::-webkit-slider-thumb:hover {
+#centralSeekBar:hover:not(:disabled)::-webkit-slider-thumb { /* Hover on TRACK highlights thumb */
     background-color: var(--primary-hover);
+}
+#centralSeekBar:active:not(:disabled)::-webkit-slider-thumb { /* Dragging thumb */
+    background-color: var(--primary-hover); /* Keep hover color */
+}
+#centralSeekBar:disabled::-webkit-slider-thumb {
+     background-color: var(--secondary-color);
+     cursor: not-allowed;
 }
 /* --- Seek Bar Thumb Styling (Firefox) --- */
 #centralSeekBar::-moz-range-thumb {
@@ -337,8 +350,15 @@ header h1 {
     border: none; /* Remove default border */
     transition: background-color 0.2s ease;
 }
-#centralSeekBar::-moz-range-thumb:hover {
+#centralSeekBar:hover:not(:disabled)::-moz-range-thumb {
      background-color: var(--primary-hover);
+}
+#centralSeekBar:active:not(:disabled)::-moz-range-thumb {
+     background-color: var(--primary-hover);
+}
+#centralSeekBar:disabled::-moz-range-thumb {
+     background-color: var(--secondary-color);
+     cursor: not-allowed;
 }
 /* --- Seek Bar Track Styling (Firefox) --- */
 #centralSeekBar::-moz-range-track {
@@ -348,16 +368,21 @@ header h1 {
     background: var(--secondary-color);
     border-radius: 4px;
 }
+#centralSeekBar:disabled::-moz-range-track {
+     cursor: not-allowed;
+}
+
 
 /* --- Disabled State for Central Controls --- */
 .central-controls-container.controls-disabled {
-    opacity: 0.5;
+    opacity: 0; /* Make invisible */
     pointer-events: none; /* Prevent interaction */
-    visibility: hidden; /* Hide it */
+    visibility: hidden; /* Remove from accessibility tree */
     height: 0; /* Collapse height */
     padding: 0;
     margin: 0;
-    overflow: hidden;
+    border: 0; /* Remove any potential border */
+    overflow: hidden; /* Hide content immediately */
 }
 
 
@@ -512,7 +537,7 @@ header h1 {
     }
 
     /* Central Controls Responsive */
-    .central-controls-container:not(.main-container.controls-hidden #centralControls) {
+    .central-controls-container:not(.main-container.controls-hidden #centralControls):not(.controls-disabled) { /* Target enabled controls */
          padding: 10px 15px; gap: 8px;
     }
     .central-controls-buttons:not(.main-container.controls-hidden .central-controls-buttons) {
@@ -569,9 +594,12 @@ header h1 {
      .video-wrapper h2:not(.main-container.controls-hidden h2) { font-size: 1.1rem; }
 
      /* Central Controls Mobile */
+    .central-controls-container:not(.main-container.controls-hidden #centralControls):not(.controls-disabled) { /* Target enabled controls */
+         padding: 8px 10px;
+    }
      .central-controls-buttons button:not(.main-container.controls-hidden .central-controls-buttons button) { font-size: 1.2rem; }
-     .central-controls-seeker:not(.main-container.controls-hidden .central-controls-seeker) { flex-wrap: wrap; justify-content: center; } /* Allow wrap */
-     #centralSeekBar:not(.main-container.controls-hidden #centralSeekBar) { flex-basis: 100%; order: 1; } /* Seeker full width */
+     .central-controls-seeker:not(.main-container.controls-hidden .central-controls-seeker) { flex-wrap: wrap; justify-content: center; gap: 5px; } /* Allow wrap, reduce gap */
+     #centralSeekBar:not(.main-container.controls-hidden #centralSeekBar) { flex-basis: 100%; order: 1; height: 6px;} /* Seeker full width, slightly thinner */
      .central-controls-seeker span:not(.main-container.controls-hidden .central-controls-seeker span) { order: 2; font-size: 0.75rem; min-width: 30px; } /* Times below */
 
 
