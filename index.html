@@ -13,7 +13,8 @@
       <!-- Our Stylesheet -->
       <link rel="stylesheet" href="style.css">
    </head>
-   <body>
+   <!-- Add class for sync state -->
+   <body class="sync-disabled">
       <div class="main-container">
          <header>
             <h1>YouTube Sync Player</h1>
@@ -22,13 +23,7 @@
          <button id="toggleViewBtn" title="Enter Cinema Mode" aria-pressed="false">
             <i class="fas fa-expand"></i> Cinema Mode <!-- Text updated by JS -->
          </button>
-         <!-- MOVED: Sync Toggle Checkbox Container -->
-         <div id="syncToggleContainer">
-            <div class="sync-toggle-group">
-               <input type="checkbox" id="syncToggleCheckbox" checked>
-               <label for="syncToggleCheckbox">Sync Enabled</label>
-            </div>
-         </div>
+
          <section class="controls-section">
             <!-- Video ID Input Groups -->
             <div class="input-group">
@@ -46,29 +41,7 @@
          </section>
          <p class="status" id="status">Loading API...</p>
 
-         <!-- ======================================= -->
-         <!-- == NEW: Sync Controls Section == -->
-         <!-- ======================================= -->
-         <section id="syncControlsSection" class="sync-controls-section">
-             <h3>Sync Controls</h3>
-             <div class="sync-control-group">
-                 <label for="offsetInput">Offset (P2 - P1, seconds):</label>
-                 <div class="input-with-button">
-                    <input type="number" id="offsetInput" step="0.01" placeholder="e.g., 1.5">
-                    <button id="applyOffsetBtn">Apply Offset</button>
-                 </div>
-             </div>
-             <div class="sync-control-group">
-                 <label for="driftDisplay">Current Drift:</label>
-                 <span id="driftDisplay" class="read-only-display">N/A</span>
-             </div>
-         </section>
-         <!-- ======================================= -->
-         <!-- ======================================= -->
-
-         <!-- ======================================= -->
-         <!-- == Central Playback Controls UI == -->
-         <!-- ======================================= -->
+         <!-- Central Playback Controls UI (TOP) -->
          <section id="centralControls" class="central-controls-container controls-disabled">
             <div class="central-controls-buttons">
                <button id="centralSkipBackwardBtn" title="Skip Backward 5s"><i class="fas fa-backward-step"></i></button>
@@ -81,18 +54,66 @@
                <span id="centralDuration">0:00</span>
             </div>
          </section>
-         <!-- ======================================= -->
-         <!-- ======================================= -->
+
+         <!-- Players Area (MIDDLE) -->
          <main class="players-container">
+            <!-- === Left Player Wrapper === -->
             <div class="video-wrapper">
                <h2>Left Video</h2>
                <div id="player1" class="player-placeholder"></div>
+               <!-- NEW: Per-Player Sync Info -->
+               <div class="player-sync-info" id="playerSyncInfo1">
+                  <div class="offset-control">
+                     <label for="offsetInput1">Offset:</label>
+                     <!-- *** UPDATED data-delta and title *** -->
+                     <button class="offset-adjust btn-minus" data-target="offsetInput1" data-delta="-0.001" title="Make Left video play earlier (0.001s)">-</button>
+                     <input type="number" class="offset-input" id="offsetInput1" data-player="1" step="0.001" title="Left Video Offset (Relative to Right)">
+                     <!-- *** UPDATED data-delta and title *** -->
+                     <button class="offset-adjust btn-plus" data-target="offsetInput1" data-delta="0.001" title="Make Left video play later (0.001s)">+</button>
+                  </div>
+                  <p class="offset-description" id="offsetDesc1">N/A</p>
+                  <div class="drift-display">
+                     <label>Drift:</label>
+                     <span class="drift-value" id="driftValue1">N/A</span>
+                  </div>
+               </div>
+               <!-- End Per-Player Sync Info -->
             </div>
+            <!-- === Right Player Wrapper === -->
             <div class="video-wrapper">
                <h2>Right Video</h2>
                <div id="player2" class="player-placeholder"></div>
+               <!-- NEW: Per-Player Sync Info -->
+               <div class="player-sync-info" id="playerSyncInfo2">
+                   <div class="offset-control">
+                     <label for="offsetInput2">Offset:</label>
+                     <!-- *** UPDATED data-delta and title *** -->
+                     <button class="offset-adjust btn-minus" data-target="offsetInput2" data-delta="-0.001" title="Make Right video play earlier (0.001s)">-</button>
+                     <input type="number" class="offset-input" id="offsetInput2" data-player="2" step="0.001" title="Right Video Offset (Relative to Left)">
+                     <!-- *** UPDATED data-delta and title *** -->
+                     <button class="offset-adjust btn-plus" data-target="offsetInput2" data-delta="0.001" title="Make Right video play later (0.001s)">+</button>
+                  </div>
+                  <p class="offset-description" id="offsetDesc2">N/A</p>
+                  <div class="drift-display">
+                     <label>Drift:</label>
+                     <span class="drift-value" id="driftValue2">N/A</span>
+                  </div>
+               </div>
+               <!-- End Per-Player Sync Info -->
             </div>
          </main>
+
+         <!-- NEW: Bottom Controls Area (Sync Toggle, Update Button) -->
+         <section id="syncControlsBottom" class="sync-controls-bottom">
+            <!-- Moved Sync Toggle -->
+            <div class="sync-toggle-group">
+               <input type="checkbox" id="syncToggleCheckbox" checked>
+               <label for="syncToggleCheckbox">Sync Enabled</label>
+            </div>
+            <!-- Renamed Apply Button -->
+            <button id="updateOffsetBtn" disabled>Update Offset</button>
+         </section>
+
       </div>
       <!-- /main-container -->
       <!-- YouTube IFrame Player API -->

@@ -1,22 +1,17 @@
 /* --- Variables and Reset --- */
  :root {
      --primary-color: #007bff;
-    /* Vibrant Blue */
      --primary-hover: #0056b3;
      --secondary-color: #6c757d;
-    /* Medium Gray */
      --light-gray: #f8f9fa;
-    /* Very Light Gray (Background) */
      --dark-gray: #343a40;
-    /* Dark Gray (Text) */
      --white: #ffffff;
      --border-color: #dee2e6;
-    /* Light Border Color */
      --shadow-color: rgba(0, 0, 0, 0.1);
      --cinema-bg: rgba(25, 25, 25, 0.85);
-    /* Semi-transparent dark background for cinema controls */
      --font-primary: 'Roboto', sans-serif;
      --font-headings: 'Poppins', sans-serif;
+     --sync-info-bg: #f0f0f0; /* Background for per-player info AND bottom controls */
 }
  * {
      margin: 0;
@@ -26,7 +21,6 @@
 /* --- Base Styles --- */
  html {
      height: 100%;
-    /* Ensure html takes full height */
 }
  body {
      font-family: var(--font-primary);
@@ -36,26 +30,17 @@
      display: flex;
      justify-content: center;
      align-items: flex-start;
-    /* Align container to top */
      padding: 20px;
      min-height: 100vh;
-    /* Ensure body covers viewport */
      height: 100%;
-    /* Allow body to size correctly */
      transition: padding 0.3s ease, background-color 0.3s ease;
      overflow-x: hidden;
-    /* Prevent horizontal scroll */
 }
-/* Class added to body when controls are hidden (Cinema Mode Active) */
  body.fullscreen-active {
      padding: 0;
-    /* Remove padding */
      background-color: #000;
-    /* Black background */
      overflow: hidden;
-    /* Hide scrollbars */
      align-items: center;
-    /* Center the container vertically in fullscreen */
 }
  .main-container {
      background-color: var(--white);
@@ -64,16 +49,12 @@
      box-shadow: 0 5px 15px var(--shadow-color);
      width: 100%;
      max-width: 1400px;
-    /* Max width for large screens */
      display: flex;
      flex-direction: column;
      align-items: center;
-    /* Center content horizontally */
      position: relative;
-    /* Needed for absolute positioning of buttons */
      transition: padding 0.3s ease, max-width 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease, border-radius 0.3s ease, opacity 0.3s ease, height 0.3s ease;
      margin: auto 0;
-    /* Vertical centering using flex on body */
 }
 /* --- Header --- */
  header {
@@ -105,7 +86,6 @@
      font-size: 0.9rem;
      transition: background-color 0.2s ease, transform 0.1s ease, top 0.3s ease, right 0.3s ease, opacity 0.3s ease;
      z-index: 1002;
-    /* Ensure above fixed controls */
      display: flex;
      align-items: center;
      gap: 6px;
@@ -119,43 +99,7 @@
      font-size: 1em;
      line-height: 1;
 }
-/* --- Sync Toggle Container --- */
- #syncToggleContainer {
-     position: absolute;
-     top: 70px;
-     right: 30px;
-     z-index: 1002;
-    /* Ensure above fixed controls */
-     background-color: rgba(108, 117, 125, 0.8);
-     padding: 6px 10px;
-     border-radius: 6px;
-     transition: background-color 0.2s ease, top 0.3s ease, right 0.3s ease, opacity 0.3s ease;
-     opacity: 1;
-}
- #syncToggleContainer:hover {
-     background-color: rgba(52, 58, 64, 0.9);
-}
- .sync-toggle-group {
-     display: flex;
-     align-items: center;
-     gap: 8px;
-}
- .sync-toggle-group input[type="checkbox"] {
-     width: 16px;
-     height: 16px;
-     cursor: pointer;
-     accent-color: var(--primary-color);
-     flex-shrink: 0;
-     margin: 0;
-}
- .sync-toggle-group label {
-     font-size: 0.85rem;
-     color: var(--white);
-     cursor: pointer;
-     user-select: none;
-     line-height: 1;
-     font-weight: 500;
-}
+
 /* --- Controls Section (Inputs and Load Button) --- */
  .controls-section {
      display: flex;
@@ -252,126 +196,6 @@
      visibility: visible;
 }
 
-/* --- START: Sync Controls Section Styles --- */
-.sync-controls-section {
-    display: flex; /* Use flex for internal layout */
-    flex-direction: column; /* Stack items vertically */
-    align-items: center; /* Center items horizontally */
-    gap: 15px;
-    width: 100%;
-    max-width: 600px; /* Limit width */
-    margin-bottom: 20px;
-    padding: 15px 20px;
-    background-color: #f0f0f0; /* Slightly different background */
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    /* Hidden by default using height/opacity for transition */
-    opacity: 0;
-    visibility: hidden;
-    height: 0;
-    overflow: hidden;
-    transition: opacity 0.3s ease, visibility 0s linear 0.3s, height 0.3s ease, padding 0.3s ease, margin 0.3s ease, border 0.3s ease;
-}
-
-.sync-controls-section.sync-controls-visible {
-    opacity: 1;
-    visibility: visible;
-    height: auto;
-    /* Restore padding/margin when visible */
-    padding: 15px 20px;
-    margin-bottom: 20px;
-}
-
-.sync-controls-section h3 {
-    font-family: var(--font-headings);
-    font-weight: 600;
-    font-size: 1.2rem;
-    color: var(--dark-gray);
-    margin: 0 0 10px 0; /* Add some bottom margin */
-    width: 100%;
-    text-align: center;
-}
-
-.sync-control-group {
-    display: flex;
-    flex-wrap: wrap; /* Allow wrapping on small screens */
-    align-items: center;
-    gap: 10px; /* Gap between label and input/display */
-    width: 100%;
-    justify-content: center; /* Center items in the group */
-}
-
-.sync-control-group label {
-    font-weight: 500;
-    font-size: 0.9rem;
-    color: var(--secondary-color);
-    flex-basis: 180px; /* Give label some fixed width */
-    text-align: right;
-    flex-shrink: 0;
-}
-
-.sync-control-group .input-with-button {
-    display: flex;
-    flex-grow: 1;
-    gap: 10px;
-    min-width: 220px; /* Ensure input + button have enough space */
-}
-
-
-.sync-control-group input[type="number"] {
-    padding: 8px 10px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    font-size: 0.95rem;
-    flex-grow: 1; /* Allow input to take available space */
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    height: 38px;
-    min-width: 100px; /* Minimum width for the input */
-}
-
-.sync-control-group input[type="number"]:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-}
-
-.sync-control-group button#applyOffsetBtn {
-    padding: 8px 15px;
-    background-color: var(--secondary-color);
-    color: var(--white);
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: background-color 0.2s ease, transform 0.1s ease;
-    height: 38px;
-    flex-shrink: 0;
-}
-
-.sync-control-group button#applyOffsetBtn:hover {
-    background-color: var(--dark-gray);
-    transform: translateY(-1px);
-}
-
-.sync-control-group .read-only-display {
-    font-size: 0.95rem;
-    font-family: monospace; /* Good for numbers */
-    color: var(--dark-gray);
-    background-color: #e9ecef; /* Visually distinct */
-    padding: 8px 12px;
-    border-radius: 6px;
-    min-width: 80px; /* Give it some base width */
-    text-align: center;
-    height: 38px;
-    line-height: 22px; /* Vertically center text approx */
-    border: 1px solid var(--border-color);
-    flex-grow: 1; /* Allow to grow slightly */
-    max-width: 150px; /* But not too much */
-}
-/* --- END: Sync Controls Section Styles --- */
-
-
 /* --- Central Controls Styles --- */
  .central-controls-container {
      width: 100%;
@@ -379,21 +203,17 @@
      padding: 15px 20px;
      background-color: var(--dark-gray);
      border-radius: 8px;
-     margin-bottom: 25px;
+     margin-bottom: 20px;
      display: flex;
      flex-direction: column;
      align-items: center;
      gap: 10px;
      transition: opacity 0.3s ease, visibility 0.3s ease, height 0.3s ease, padding 0.3s ease, margin 0.3s ease, transform 0.3s ease, background-color 0.3s ease, border-radius 0.3s ease;
-    /* Added more transitions */
      opacity: 1;
      visibility: visible;
      height: auto;
-    /* Default state */
      position: relative;
-    /* Default position */
      transform: translateY(0);
-    /* Default transform */
 }
  .central-controls-buttons {
      display: flex;
@@ -497,7 +317,6 @@
  #centralSeekBar:disabled::-moz-range-track {
      cursor: not-allowed;
 }
-/* --- Disabled State for Central Controls (when sync is OFF or no overlap) --- */
  .central-controls-container.controls-disabled {
      opacity: 0;
      pointer-events: none;
@@ -508,8 +327,8 @@
      border: 0;
      overflow: hidden;
      transform: translateY(20px);
-    /* Add slight slide down effect */
 }
+
 /* --- Players Area --- */
  .players-container {
      display: flex;
@@ -518,7 +337,7 @@
      flex-wrap: wrap;
      width: 100%;
      transition: margin-top 0.3s ease, gap 0.3s ease, width 0.3s ease, height 0.3s ease, padding-bottom 0.3s ease;
-    /* Added padding transition */
+     margin-bottom: 10px;
 }
  .video-wrapper {
      flex: 1 1 45%;
@@ -550,15 +369,187 @@
      box-shadow: 0 3px 8px var(--shadow-color);
      transition: border 0.3s ease, border-radius 0.3s ease, box-shadow 0.3s ease, height 0.3s ease, aspect-ratio 0.3s ease, background-color 0.3s ease;
      display: block;
+     margin-bottom: 10px;
 }
  .video-wrapper iframe {
      background-color: #000;
 }
+
+/* --- Per-Player Sync Info Styles --- */
+.player-sync-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 400px;
+    padding: 10px 15px;
+    background-color: var(--sync-info-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin-top: 5px;
+    transition: opacity 0.3s ease, visibility 0s linear 0.3s, height 0.3s ease, padding 0.3s ease, margin 0.3s ease, border 0.3s ease;
+    /* Hidden by default, shown when body has .sync-enabled */
+    opacity: 0;
+    visibility: hidden;
+    height: 0;
+    overflow: hidden;
+    padding: 0;
+    margin: 0;
+    border: 0;
+}
+/* Show only when sync is enabled */
+body.sync-enabled .player-sync-info {
+    opacity: 1;
+    visibility: visible;
+    height: auto;
+    padding: 10px 15px;
+    margin-top: 5px;
+    border: 1px solid var(--border-color);
+}
+
+.offset-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    justify-content: center;
+}
+
+.offset-control label {
+    font-weight: 500;
+    font-size: 0.85rem;
+    color: var(--secondary-color);
+    margin-right: 5px;
+    flex-shrink: 0;
+}
+
+.offset-adjust {
+    background-color: var(--secondary-color);
+    color: var(--white);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    line-height: 1;
+    padding: 4px 8px;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    flex-shrink: 0;
+    min-width: 28px;
+}
+.offset-adjust:hover {
+    background-color: var(--dark-gray);
+    transform: scale(1.05);
+}
+.offset-adjust:active {
+    transform: scale(0.95);
+}
+
+.offset-input {
+    padding: 5px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    text-align: center;
+    width: 80px;
+    -moz-appearance: textfield;
+    flex-shrink: 0;
+}
+.offset-input::-webkit-outer-spin-button,
+.offset-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.offset-description {
+    font-size: 0.75rem;
+    color: var(--secondary-color);
+    text-align: center;
+    margin-top: -3px;
+    margin-bottom: 3px;
+    min-height: 1.1em;
+}
+
+.drift-display {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.85rem;
+}
+.drift-display label {
+    font-weight: 500;
+    color: var(--secondary-color);
+}
+.drift-value {
+    font-family: monospace;
+    font-weight: 500;
+    color: var(--dark-gray);
+    min-width: 50px;
+    text-align: right;
+}
+
+/* --- Bottom Controls Area Styles --- */
+.sync-controls-bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+    max-width: 400px;
+    padding: 15px;
+    margin-top: 10px; /* Space above this section */
+    margin-bottom: 0; /* No space needed below */
+    background-color: var(--sync-info-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    /* *** MADE VISIBLE BY DEFAULT (removed opacity/visibility/height etc) *** */
+    transition: opacity 0.3s ease, visibility 0s linear 0.3s, height 0.3s ease, padding 0.3s ease, margin 0.3s ease, border 0.3s ease; /* Keep transitions for cinema mode hiding */
+}
+/* *** REMOVED: body.sync-enabled .sync-controls-bottom rule *** */
+
+/* Styles for moved Sync Toggle Group */
+.sync-controls-bottom .sync-toggle-group {
+    background-color: transparent;
+    padding: 0;
+    border-radius: 0;
+    position: static;
+    opacity: 1;
+}
+.sync-controls-bottom .sync-toggle-group label {
+    color: var(--dark-gray);
+    font-size: 0.9rem;
+}
+.sync-controls-bottom .sync-toggle-group input[type="checkbox"] {
+     width: 18px;
+     height: 18px;
+}
+
+#updateOffsetBtn {
+    padding: 8px 20px;
+    background-color: var(--primary-color);
+    color: var(--white);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: background-color 0.2s ease, transform 0.1s ease, opacity 0.2s ease;
+}
+#updateOffsetBtn:hover:not(:disabled) {
+    background-color: var(--primary-hover);
+    transform: translateY(-1px);
+}
+#updateOffsetBtn:disabled {
+    background-color: var(--secondary-color);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
 /* =================================================== */
 /* === Styles when CINEMA MODE is active === */
 /* =================================================== */
  .main-container.controls-hidden {
-    /* controls-hidden is now Cinema Mode */
      max-width: none;
      width: 100%;
      height: 100%;
@@ -570,12 +561,13 @@
      opacity: 1;
      overflow: hidden;
 }
-/* Hide header, INPUT controls, status, video titles AND SYNC CONTROLS smoothly */
+/* Hide header, INPUT controls, status, video titles, PER-PLAYER info, and BOTTOM controls */
  .main-container.controls-hidden header,
  .main-container.controls-hidden .controls-section,
  .main-container.controls-hidden .status,
  .main-container.controls-hidden .video-wrapper h2,
- .main-container.controls-hidden #syncControlsSection /* ADDED: Hide sync controls in cinema mode */
+ .main-container.controls-hidden .player-sync-info,
+ .main-container.controls-hidden #syncControlsBottom /* This rule still hides it in cinema mode */
  {
      opacity: 0;
      visibility: hidden;
@@ -588,39 +580,25 @@
      z-index: -1;
      transition: opacity 0.3s ease, visibility 0s linear 0.3s, height 0.3s ease, margin 0.3s ease, padding 0.3s ease;
 }
-/* --- Keep Central Controls VISIBLE and position FIXED at bottom in Cinema Mode --- */
+/* Keep Central Controls VISIBLE and position FIXED */
  .main-container.controls-hidden #centralControls {
      opacity: 1;
-    /* Keep visible */
      visibility: visible;
-    /* Keep visible */
      height: auto;
-    /* Keep height */
      position: fixed;
-    /* Position relative to viewport */
      bottom: 0;
      left: 0;
      right: 0;
      width: 100%;
      max-width: none;
-    /* Override max-width */
      background-color: var(--cinema-bg);
-    /* Use semi-transparent background */
      border-radius: 0;
-    /* Remove border-radius */
      padding: 10px 20px;
-    /* Adjust padding for fixed view */
      z-index: 1001;
-    /* Ensure above players */
      margin-bottom: 0;
-    /* Remove margin */
      transform: translateY(0);
-    /* Ensure it's not translated */
-    /* Prevent transition glitches when hiding other elements */
      transition: background-color 0.3s ease, padding 0.3s ease, opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
-    /* Add transitions for smooth hide/show if disabled */
 }
-/* Style disabled state when in Cinema Mode */
  .main-container.controls-hidden #centralControls.controls-disabled {
      opacity: 0;
      visibility: hidden;
@@ -630,36 +608,29 @@
      border: 0;
      overflow: hidden;
      transform: translateY(100%);
-    /* Slide down when disabled */
 }
 /* Adjust toggle buttons positions for cinema mode */
- .main-container.controls-hidden #toggleViewBtn, .main-container.controls-hidden #syncToggleContainer {
+ .main-container.controls-hidden #toggleViewBtn {
      position: fixed;
      opacity: 0.8;
      background-color: rgba(108, 117, 125, 0.8);
-}
- .main-container.controls-hidden #toggleViewBtn {
      top: 15px;
      right: 15px;
 }
- .main-container.controls-hidden #syncToggleContainer {
-     top: 60px;
-     right: 15px;
-}
- .main-container.controls-hidden #toggleViewBtn:hover, .main-container.controls-hidden #syncToggleContainer:hover {
+ .main-container.controls-hidden #toggleViewBtn:hover {
      opacity: 1;
      background-color: rgba(52, 58, 64, 0.9);
 }
 /* Player layout for cinema mode */
  .main-container.controls-hidden .players-container {
      margin-top: 0;
+     margin-bottom: 0;
      gap: 0;
      width: 100%;
      height: 100%;
      flex-wrap: nowrap;
      background-color: #000;
      padding-bottom: 70px;
-    /* Add padding to prevent overlap with fixed controls */
 }
  .main-container.controls-hidden .video-wrapper {
      flex-basis: 50%;
@@ -676,6 +647,7 @@
      width: 100%;
      aspect-ratio: auto;
      background-color: #000;
+     margin-bottom: 0;
 }
 /* =================================================== */
 /* === Responsive Adjustments === */
@@ -716,38 +688,11 @@
          order: 3;
     }
 
-    /* Normal Sync Controls */
-    .sync-controls-section:not(.main-container.controls-hidden #syncControlsSection) {
-        padding: 10px 15px;
-        gap: 12px;
-    }
-    .sync-control-group:not(.main-container.controls-hidden .sync-control-group) {
-        gap: 8px;
-        flex-direction: column; /* Stack label and input/button vertically */
-        align-items: flex-start; /* Align items to the start */
-    }
-    .sync-control-group label:not(.main-container.controls-hidden .sync-control-group label) {
-        flex-basis: auto; /* Reset basis */
-        text-align: left; /* Align label left */
-        margin-bottom: 3px;
-        width: 100%; /* Label takes full width */
-    }
-    .sync-control-group .input-with-button:not(.main-container.controls-hidden .input-with-button) {
-        width: 100%; /* Make input+button container full width */
-        min-width: 0;
-    }
-    .sync-control-group .read-only-display:not(.main-container.controls-hidden .read-only-display) {
-        width: 100%; /* Make display full width */
-        max-width: none; /* Allow it to be full width */
-        text-align: left;
-        padding-left: 12px;
-    }
-
-
     /* Normal Central Controls */
      .central-controls-container:not(.main-container.controls-hidden #centralControls):not(.controls-disabled) {
          padding: 10px 15px;
          gap: 8px;
+         margin-bottom: 15px;
     }
      .central-controls-buttons:not(.main-container.controls-hidden .central-controls-buttons) {
          gap: 15px;
@@ -762,43 +707,70 @@
          font-size: 0.8rem;
          min-width: 35px;
     }
+
     /* Normal Players */
      .players-container:not(.main-container.controls-hidden .players-container) {
          gap: 20px;
          flex-direction: column;
          align-items: center;
          padding-bottom: 0;
-        /* Reset padding */
+         margin-bottom: 15px;
     }
      .video-wrapper:not(.main-container.controls-hidden .video-wrapper) {
          flex-basis: 100%;
          max-width: 600px;
          width: 100%;
     }
-    /* Normal Buttons */
+
+    /* Normal Per-Player Sync Info */
+    .player-sync-info:not(.main-container.controls-hidden .player-sync-info) {
+        max-width: 300px;
+        padding: 8px 12px;
+        gap: 5px;
+    }
+    .offset-control:not(.main-container.controls-hidden .offset-control) {
+        gap: 6px;
+    }
+     .offset-input:not(.main-container.controls-hidden .offset-input) {
+        width: 70px;
+        font-size: 0.85rem;
+    }
+    .offset-adjust:not(.main-container.controls-hidden .offset-adjust) {
+        font-size: 0.9rem;
+        padding: 3px 6px;
+        min-width: 24px;
+    }
+    .offset-description:not(.main-container.controls-hidden .offset-description) {
+        font-size: 0.7rem;
+    }
+    .drift-display:not(.main-container.controls-hidden .drift-display) {
+        font-size: 0.8rem;
+    }
+
+    /* Normal Bottom Controls */
+    .sync-controls-bottom:not(.main-container.controls-hidden #syncControlsBottom) {
+         max-width: 300px;
+         padding: 12px;
+         gap: 12px;
+         margin-top: 0; /* Adjust top margin */
+    }
+     #updateOffsetBtn:not(.main-container.controls-hidden #updateOffsetBtn) {
+         font-size: 0.9rem;
+         padding: 7px 18px;
+     }
+
+    /* Normal Buttons (Top Right) */
      #toggleViewBtn:not(.main-container.controls-hidden #toggleViewBtn) {
          top: 15px;
          right: 15px;
          padding: 6px 10px;
          font-size: 0.8rem;
     }
-     #syncToggleContainer:not(.main-container.controls-hidden #syncToggleContainer) {
-         top: 55px;
-         right: 15px;
-         padding: 5px 8px;
-    }
-     .sync-toggle-group label:not(.main-container.controls-hidden .sync-toggle-group label) {
-         font-size: 0.8rem;
-    }
-     .sync-toggle-group input[type=checkbox]:not(.main-container.controls-hidden .sync-toggle-group input) {
-         width: 14px;
-         height: 14px;
-    }
+
     /* === Cinema Mode Responsive (Tablet/Mobile - Stack Vertically) === */
      .main-container.controls-hidden .players-container {
          flex-direction: column;
          padding-bottom: 80px;
-        /* Increased padding for taller fixed controls */
     }
      .main-container.controls-hidden .video-wrapper {
          flex-basis: 50%;
@@ -816,29 +788,23 @@
          justify-content: center;
          gap: 5px;
     }
-    /* Allow wrap */
      .main-container.controls-hidden #centralControls #centralSeekBar {
          flex-basis: 100%;
          order: 1;
          height: 6px;
     }
-    /* Seeker full width */
      .main-container.controls-hidden #centralControls .central-controls-seeker span {
          order: 2;
          font-size: 0.75rem;
          min-width: 30px;
     }
-    /* Times below */
     /* Cinema Mode Buttons Responsive */
      .main-container.controls-hidden #toggleViewBtn {
          top: 10px;
          right: 10px;
     }
-     .main-container.controls-hidden #syncToggleContainer {
-         top: 50px;
-         right: 10px;
-    }
 }
+
  @media (max-width: 480px) {
     /* === Normal Mode Responsive (Mobile) === */
      header:not(.main-container.controls-hidden header) h1 {
@@ -852,20 +818,7 @@
          font-size: 1.1rem;
     }
 
-    /* Normal Sync Controls Mobile */
-    .sync-control-group input[type="number"]:not(.main-container.controls-hidden input[type="number"]),
-    .sync-control-group button#applyOffsetBtn:not(.main-container.controls-hidden button#applyOffsetBtn),
-    .sync-control-group .read-only-display:not(.main-container.controls-hidden .read-only-display) {
-        font-size: 0.9rem; /* Slightly smaller text */
-        height: 36px; /* Slightly smaller height */
-        padding: 6px 8px;
-    }
-    .sync-control-group .read-only-display:not(.main-container.controls-hidden .read-only-display) {
-         line-height: 24px; /* Adjust line height */
-    }
-
-
-    /* Normal Central Controls Mobile */
+     /* Normal Central Controls Mobile */
      .central-controls-buttons button:not(.main-container.controls-hidden .central-controls-buttons button) {
          font-size: 1.2rem;
     }
@@ -884,26 +837,40 @@
          font-size: 0.75rem;
          min-width: 30px;
     }
-    /* Normal Buttons Mobile */
+
+     /* Normal Per-Player Sync Info Mobile */
+    .player-sync-info:not(.main-container.controls-hidden .player-sync-info) {
+        max-width: 90%; /* Wider on mobile */
+    }
+    .offset-control:not(.main-container.controls-hidden .offset-control) {
+        gap: 5px; /* Tighter gap */
+    }
+     .offset-input:not(.main-container.controls-hidden .offset-input) {
+        width: 65px;
+    }
+     .offset-adjust:not(.main-container.controls-hidden .offset-adjust) {
+        min-width: 22px;
+    }
+
+     /* Normal Bottom Controls Mobile */
+    .sync-controls-bottom:not(.main-container.controls-hidden #syncControlsBottom) {
+         max-width: 90%;
+    }
+
+    /* Normal Buttons (Top Right) Mobile */
      #toggleViewBtn:not(.main-container.controls-hidden #toggleViewBtn) {
          top: 10px;
          right: 10px;
     }
-     #syncToggleContainer:not(.main-container.controls-hidden #syncToggleContainer) {
-         top: 48px;
-         right: 10px;
-    }
+
     /* Cinema Mode adjustments for mobile mostly covered by 768px breakpoint */
      .main-container.controls-hidden .players-container {
          padding-bottom: 90px;
-        /* Slightly more padding */
     }
      .main-container.controls-hidden #centralControls {
          padding: 6px 10px;
     }
-    /* Tighter padding */
      .main-container.controls-hidden #centralControls .central-controls-buttons {
          gap: 10px;
     }
-    /* Tighter button gap */
 }
