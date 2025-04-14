@@ -16,6 +16,12 @@ const centralDuration = document.getElementById('centralDuration');
 const centralSkipBackwardBtn = document.getElementById('centralSkipBackwardBtn');
 const centralSkipForwardBtn = document.getElementById('centralSkipForwardBtn');
 
+// *** NEW: Sync Controls References ***
+const syncControlsSection = document.getElementById('syncControlsSection');
+const offsetInput = document.getElementById('offsetInput');
+const applyOffsetBtn = document.getElementById('applyOffsetBtn');
+const driftDisplay = document.getElementById('driftDisplay');
+
 
 // Player instances
 let player1 = null;
@@ -24,7 +30,7 @@ let playersReady = 0;
 
 // --- Sync State Variables ---
 let isSyncGloballyEnabled = true;
-let syncOffsetSeconds = 0;
+let syncOffsetSeconds = 0; // The TARGET offset
 
 // --- Overlap Calculation State ---
 let overlapStartP1 = 0; // The time on Player 1 where the overlap begins
@@ -39,8 +45,8 @@ let tempSyncOffset = 0; // Offset to use when calculating P2 seek time after rec
 let isRecreating = false; // Flag to indicate recreation is in progress
 
 // --- Drift Monitoring Variables ---
-let driftLogInterval = null; // Timer for *logging* drift
-const DRIFT_LOG_INTERVAL_MS = 2000; // Log every 2 seconds
+let driftLogInterval = null; // Timer for *logging* drift AND updating drift UI
+const DRIFT_LOG_INTERVAL_MS = 1000; // Log/update drift every 1 second (was 2s)
 
 // --- Central Controller UI Update Timer ---
 let uiUpdateInterval = null;
@@ -122,13 +128,14 @@ function loadVideos() {
     stopDriftLogTimer();
     stopUiUpdateTimer();
     destroyPlayers();
-    isSyncGloballyEnabled = true;
+    isSyncGloballyEnabled = true; // Reset sync toggle state
     syncOffsetSeconds = 0;
     overlapStartP1 = 0;
     overlapEndP1 = Infinity;
     overlapDuration = 0;
-    if (syncToggleCheckbox) syncToggleCheckbox.checked = true;
+    if (syncToggleCheckbox) syncToggleCheckbox.checked = true; // Ensure checkbox reflects state
     setCentralControlsEnabled(false);
+    setSyncControlsVisibility(false); // *** Hide sync controls on new load
     storedVideoId1 = videoId1;
     storedVideoId2 = videoId2;
     const initialControls = syncToggleCheckbox.checked ? 0 : 1;
@@ -216,8 +223,9 @@ function onPlayerReady(event) {
         if (isRecreating) {
             // --- Post-Recreation Logic ---
             console.log(`Recreation complete. Restoring state: P1 time=${tempStartTimeP1.toFixed(2)}, Captured Offset=${tempSyncOffset.toFixed(2)}`);
-            syncOffsetSeconds = tempSyncOffset;
+            syncOffsetSeconds = tempSyncOffset; // Restore the offset calculated BEFORE recreation
             calculateOverlap();
+            updateOffsetInputValue(); // *** Update input field with restored offset
             const targetP1 = Math.max(overlapStartP1, Math.min(tempStartTimeP1, overlapEndP1));
             const targetP2 = targetP1 + syncOffsetSeconds;
             console.log(`Seeking post-recreate: P1 to ${targetP1.toFixed(2)}, P2 to ${targetP2.toFixed(2)} (Overlap: ${overlapStartP1.toFixed(2)}-${overlapEndP1.toFixed(2)})`);
@@ -229,7 +237,8 @@ function onPlayerReady(event) {
                         player1.pauseVideo();
                         player2.pauseVideo();
                         console.log("Players paused after recreation seek.");
-                        isSyncGloballyEnabled = syncToggleCheckbox.checked;
+                        isSyncGloballyEnabled = syncToggleCheckbox.checked; // Re-read just in case
+                        setSyncControlsVisibility(isSyncGloballyEnabled); // *** Show/Hide Sync Controls
                         if (isSyncGloballyEnabled && overlapDuration > 0) {
                             setCentralControlsEnabled(true);
                             updateCentralControllerUI(player1, YT.PlayerState.PAUSED);
@@ -239,7 +248,7 @@ function onPlayerReady(event) {
                             console.log(overlapDuration <= 0 ? "No overlap, keeping central controls disabled." : "Native controls enabled post-recreation.");
                         }
                         updateSyncStatusMessage();
-                        startDriftLogTimer();
+                        startDriftLogTimer(); // Start logging/updating drift
                     } else {
                         console.warn("Players became invalid during post-recreation pause timeout.");
                     }
@@ -252,6 +261,7 @@ function onPlayerReady(event) {
                 console.error("Error seeking/pausing players after recreation:", e);
                 isRecreating = false;
                 setCentralControlsEnabled(false);
+                setSyncControlsVisibility(isSyncGloballyEnabled);
                 updateSyncStatusMessage();
                 startDriftLogTimer();
                 statusElement.textContent = "Error restoring state.";
@@ -260,40 +270,62 @@ function onPlayerReady(event) {
             // --- Initial Load Logic ---
             console.log("Initial load complete.");
             isSyncGloballyEnabled = syncToggleCheckbox.checked;
+            setSyncControlsVisibility(isSyncGloballyEnabled); // *** Show/Hide Sync Controls
             if (isSyncGloballyEnabled) {
                 try {
-                    const time1 = player1.getCurrentTime();
-                    const time2 = player2.getCurrentTime();
-                    syncOffsetSeconds = time2 - time1;
-                    console.log(`Initial Offset (P2 - P1): ${syncOffsetSeconds.toFixed(2)}s`);
-                    calculateOverlap();
+                    // Pause first to get accurate times?
                     player1.pauseVideo();
                     player2.pauseVideo();
-                    const targetP1 = Math.max(0, overlapStartP1);
-                    const targetP2Time = targetP1 + syncOffsetSeconds;
-                    player1.seekTo(targetP1, true);
-                    player2.seekTo(Math.max(0, targetP2Time), true);
-                    console.log(`Initial seek: P1 to ${targetP1.toFixed(2)}, P2 to ${targetP2Time.toFixed(2)}`);
-                    if (overlapDuration > 0) {
-                        setCentralControlsEnabled(true);
-                        setTimeout(() => updateCentralControllerUI(player1, YT.PlayerState.PAUSED), 100);
-                    } else {
-                        setCentralControlsEnabled(false);
-                    }
+
+                    // Delay slightly to ensure pause registers before getting time
+                    setTimeout(() => {
+                        if (!player1 || !player2) return; // Check if players still exist
+                        try {
+                            const time1 = player1.getCurrentTime();
+                            const time2 = player2.getCurrentTime();
+                            syncOffsetSeconds = time2 - time1; // Calculate initial offset
+                            console.log(`Initial Offset (P2 - P1): ${syncOffsetSeconds.toFixed(3)}s`);
+                            updateOffsetInputValue(); // *** Update input field
+                            calculateOverlap();
+                            const targetP1 = Math.max(0, overlapStartP1);
+                            const targetP2Time = targetP1 + syncOffsetSeconds;
+                            player1.seekTo(targetP1, true);
+                            player2.seekTo(Math.max(0, targetP2Time), true);
+                            console.log(`Initial seek: P1 to ${targetP1.toFixed(2)}, P2 to ${targetP2Time.toFixed(2)}`);
+                            if (overlapDuration > 0) {
+                                setCentralControlsEnabled(true);
+                                setTimeout(() => updateCentralControllerUI(player1, YT.PlayerState.PAUSED), 100);
+                            } else {
+                                setCentralControlsEnabled(false);
+                            }
+                            updateSyncStatusMessage();
+                            startDriftLogTimer();
+                            statusElement.textContent = "Players Ready.";
+                        } catch(eInner) {
+                             console.error("Error during initial sync setup (delayed part):", eInner);
+                             setCentralControlsEnabled(false);
+                             setSyncControlsVisibility(false);
+                             statusElement.textContent = "Error setting up sync.";
+                        }
+                    }, 150); // Delay after pause
+
                 } catch (e) {
-                    console.error("Error during initial sync setup:", e);
+                    console.error("Error during initial sync setup (outer):", e);
                     setCentralControlsEnabled(false);
+                    setSyncControlsVisibility(false);
+                     statusElement.textContent = "Error setting up sync.";
                 }
             } else {
+                // Sync disabled initially
                 setCentralControlsEnabled(false);
                 try {
                     player1.pauseVideo();
                     player2.pauseVideo();
                 } catch (e) {}
+                 updateSyncStatusMessage();
+                 startDriftLogTimer(); // Start timer even if sync off, just won't update drift display
+                 statusElement.textContent = "Players Ready.";
             }
-            updateSyncStatusMessage();
-            startDriftLogTimer();
-            statusElement.textContent = "Players Ready.";
         }
     } else if (playersReady < 2) {
         if (!isRecreating) {
@@ -301,6 +333,7 @@ function onPlayerReady(event) {
         }
     }
 }
+
 
 // --- Calculate Overlap ---
 function calculateOverlap() {
@@ -318,16 +351,33 @@ function calculateOverlap() {
             console.log("Cannot calculate overlap: Durations invalid (<= 0).");
             return;
         }
+        // Overlap starts when BOTH videos are playing
+        // If P2 starts later (offset > 0), overlap starts at P1 time = 0
+        // If P1 starts later (offset < 0), overlap starts at P1 time = -offset
         overlapStartP1 = Math.max(0, -syncOffsetSeconds);
+
+        // Overlap ends when EITHER video finishes
+        // P1 ends at time duration1
+        // P2 ends at time duration2. The equivalent P1 time is duration2 - offset
         const endP1_limit1 = duration1;
         const endP1_limit2 = duration2 - syncOffsetSeconds;
         overlapEndP1 = Math.min(endP1_limit1, endP1_limit2);
+
+        // Ensure start is not after end
+        overlapEndP1 = Math.max(overlapStartP1, overlapEndP1);
+
         overlapDuration = Math.max(0, overlapEndP1 - overlapStartP1);
-        console.log(`Overlap Calculated: P1 Duration=${duration1.toFixed(2)}, P2 Duration=${duration2.toFixed(2)}, Offset=${syncOffsetSeconds.toFixed(2)}`);
-        console.log(`  -> Overlap in P1 Time: [${overlapStartP1.toFixed(2)}, ${overlapEndP1.toFixed(2)}] (Duration: ${overlapDuration.toFixed(2)}s)`);
+
+        console.log(`Overlap Calculated: P1 Duration=${duration1.toFixed(2)}, P2 Duration=${duration2.toFixed(2)}, Offset=${syncOffsetSeconds.toFixed(3)}`);
+        console.log(`  -> Overlap in P1 Time: [${overlapStartP1.toFixed(3)}, ${overlapEndP1.toFixed(3)}] (Duration: ${overlapDuration.toFixed(3)}s)`);
         if (overlapDuration <= 0) {
             console.warn("No overlap detected between videos with current offset.");
+            if (isSyncGloballyEnabled) {
+                 // If sync is on but no overlap, disable central controls
+                 setCentralControlsEnabled(false);
+            }
         }
+        updateCentralControllerUI(player1); // Update central controls based on new overlap
     } catch (e) {
         console.error("Error calculating overlap:", e);
         overlapStartP1 = 0;
@@ -349,6 +399,10 @@ function onPlayerStateChange(event) {
     if (isSyncGloballyEnabled && changedPlayer === player1) {
         console.log(`P1 State Changed (Sync ON): ${getPlayerStateName(newState)} -> Updating Central UI`);
         updateCentralControllerUI(player1, newState);
+         // Ensure drift update continues even if paused
+        if (newState === YT.PlayerState.PAUSED || newState === YT.PlayerState.ENDED) {
+            logDrift(); // Update drift display one last time on pause/end
+        }
     } else if (!isSyncGloballyEnabled) {
         try {
             const sourceTime = changedPlayer.getCurrentTime();
@@ -360,11 +414,98 @@ function onPlayerStateChange(event) {
     }
 }
 
+// --- Sync Controls UI Logic ---
+function setSyncControlsVisibility(visible) {
+    if (!syncControlsSection) return;
+    if (visible && !mainContainer.classList.contains('controls-hidden')) { // Only show if sync enabled AND not in cinema mode
+        syncControlsSection.classList.add('sync-controls-visible');
+        // Update values when shown
+        updateOffsetInputValue();
+        logDrift(); // Update drift immediately when shown
+    } else {
+        syncControlsSection.classList.remove('sync-controls-visible');
+        if (driftDisplay) driftDisplay.textContent = "N/A"; // Reset drift display when hidden
+    }
+}
+
+function updateOffsetInputValue() {
+    if (offsetInput) {
+        // Format to 3 decimal places for clarity
+        offsetInput.value = syncOffsetSeconds.toFixed(3);
+    }
+}
+
+function applyCustomOffset() {
+    if (!offsetInput || !player1 || !player2 || !isSyncGloballyEnabled) {
+        console.warn("Cannot apply offset: Input missing, players not ready, or sync disabled.");
+        return;
+    }
+    const newOffsetStr = offsetInput.value;
+    const newOffset = parseFloat(newOffsetStr);
+
+    if (isNaN(newOffset)) {
+        console.error("Invalid offset value entered:", newOffsetStr);
+        statusElement.textContent = "Error: Invalid offset value.";
+        // Optional: revert input to current value
+        updateOffsetInputValue();
+        return;
+    }
+
+    console.log(`Applying new custom offset: ${newOffset.toFixed(3)}s`);
+    syncOffsetSeconds = newOffset; // Update the global target offset
+
+    try {
+        // Recalculate overlap based on the NEW offset
+        calculateOverlap();
+
+        // Determine current P1 time to maintain position relative to P1
+        const currentTimeP1 = player1.getCurrentTime();
+
+        // Seek both players immediately to reflect the new offset relative to P1's current time
+        // Clamp P1's target time within the *new* overlap boundaries
+        const targetSeekP1 = Math.max(overlapStartP1, Math.min(currentTimeP1, overlapEndP1));
+        const targetSeekP2 = targetSeekP1 + syncOffsetSeconds; // Use the NEW offset
+
+        console.log(`Seeking after applying offset: P1 to ${targetSeekP1.toFixed(3)}, P2 to ${targetSeekP2.toFixed(3)}`);
+
+        const wasPlaying = player1.getPlayerState() === YT.PlayerState.PLAYING;
+         if (wasPlaying) {
+             player1.pauseVideo(); // Pause briefly to ensure seek accuracy
+             player2.pauseVideo();
+         }
+
+        player1.seekTo(targetSeekP1, true);
+        player2.seekTo(Math.max(0, targetSeekP2), true); // Ensure P2 doesn't seek before 0
+
+        if (wasPlaying) {
+            // Resume playing after a short delay
+            setTimeout(() => {
+                if (player1 && player2 && isSyncGloballyEnabled) {
+                    player1.playVideo();
+                    player2.playVideo();
+                }
+            }, 150);
+        }
+
+        // Update UI elements immediately
+        setCentralControlsEnabled(isSyncGloballyEnabled && overlapDuration > 0); // Re-evaluate central controls based on new overlap
+        updateCentralControllerUI(player1); // Update central controller based on new state
+        updateSyncStatusMessage(); // Update status message (might mention offset)
+        logDrift(); // Update drift display immediately
+
+    } catch (e) {
+        console.error("Error applying custom offset and seeking:", e);
+        statusElement.textContent = "Error applying new offset.";
+        // Attempt to restore previous state? Might be complex.
+        // For now, just log the error.
+    }
+}
+
 
 // --- Central Controls Logic ---
 function setCentralControlsEnabled(enabled) {
     if (!centralControlsContainer) return;
-    if (enabled) {
+    if (enabled && isSyncGloballyEnabled && overlapDuration > 0) { // Added checks
         centralControlsContainer.classList.remove('controls-disabled');
         if (centralPlayPauseBtn) centralPlayPauseBtn.disabled = false;
         if (centralSeekBar) centralSeekBar.disabled = false;
@@ -378,11 +519,12 @@ function setCentralControlsEnabled(enabled) {
         if (centralSkipBackwardBtn) centralSkipBackwardBtn.disabled = true;
         if (centralSkipForwardBtn) centralSkipForwardBtn.disabled = true;
         stopUiUpdateTimer();
-        console.log("Central controls DISABLED.");
+        console.log("Central controls DISABLED.", enabled ? "" : "(Reason: Sync Off or No Overlap)");
+        // Reset UI elements when disabled
         if (centralPlayPauseBtn) centralPlayPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
         if (centralSeekBar) {
             centralSeekBar.value = 0;
-            centralSeekBar.max = 100;
+            centralSeekBar.max = 100; // Default max
         }
         if (centralCurrentTime) centralCurrentTime.textContent = "0:00";
         if (centralDuration) centralDuration.textContent = "0:00";
@@ -391,42 +533,62 @@ function setCentralControlsEnabled(enabled) {
 
 function updateCentralControllerUI(player, state) {
     if (!player || typeof player.getDuration !== 'function' || typeof player.getCurrentTime !== 'function' || !centralControlsContainer) return;
-    if (!isSyncGloballyEnabled || centralControlsContainer.classList.contains('controls-disabled')) return;
-    if (overlapDuration <= 0 || overlapEndP1 === Infinity) {
-        calculateOverlap();
-        if (overlapDuration <= 0) {
-            console.log("Update UI skipped: No valid overlap duration calculated yet.");
-            setCentralControlsEnabled(false);
-            return;
-        }
+    // Only update if sync is on AND controls are *supposed* to be enabled (overlap > 0)
+    if (!isSyncGloballyEnabled || overlapDuration <= 0 || overlapEndP1 === Infinity) {
+         // If called when it shouldn't be active, ensure controls are disabled
+         if (!centralControlsContainer.classList.contains('controls-disabled')) {
+             // calculateOverlap(); // Re-check overlap just in case
+             // if (overlapDuration <= 0) { // Check again after calculation
+                 console.log("Update UI skipped: No valid overlap duration for active central controls.");
+                 setCentralControlsEnabled(false);
+             // }
+         }
+        return;
     }
+    // If we reach here, sync is ON and overlap EXISTS.
+
     try {
         const currentTimeP1 = player.getCurrentTime();
         const currentState = state !== undefined ? state : player.getPlayerState();
+
+        // Calculate position within the overlap timeline
         const clampedCurrentTimeP1 = Math.max(overlapStartP1, Math.min(currentTimeP1, overlapEndP1));
         const currentOverlapTime = clampedCurrentTimeP1 - overlapStartP1;
+
+        // Update Seek Bar
         if (centralSeekBar) {
+             // Set max only if it differs significantly to avoid jitter
             if (overlapDuration > 0 && Math.abs(centralSeekBar.max - overlapDuration) > 0.1) {
                 centralSeekBar.max = overlapDuration;
+                console.log(`Central Seekbar Max updated to: ${overlapDuration.toFixed(3)}`);
             }
+            // Update value only if user isn't actively dragging
             if (!centralSeekBar.matches(':active')) {
-                centralSeekBar.value = Math.max(0, Math.min(currentOverlapTime, overlapDuration));
+                 // Ensure value stays within 0 and max
+                 const seekBarValue = Math.max(0, Math.min(currentOverlapTime, overlapDuration));
+                centralSeekBar.value = seekBarValue;
             }
         }
+
+        // Update Time Displays
         if (centralCurrentTime) centralCurrentTime.textContent = formatTime(currentOverlapTime);
         if (centralDuration) centralDuration.textContent = formatTime(overlapDuration);
+
+        // Update Play/Pause Button
         if (centralPlayPauseBtn) {
             if (currentState === YT.PlayerState.PLAYING) {
                 centralPlayPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
                 centralPlayPauseBtn.title = "Pause";
-                startUiUpdateTimer();
+                startUiUpdateTimer(); // Keep UI updating while playing
             } else {
                 centralPlayPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
                 centralPlayPauseBtn.title = "Play";
-                stopUiUpdateTimer();
-                if ((currentState === YT.PlayerState.PAUSED || currentState === YT.PlayerState.ENDED) && centralSeekBar && !centralSeekBar.matches(':active')) {
-                    centralSeekBar.value = Math.max(0, Math.min(currentOverlapTime, overlapDuration));
-                }
+                stopUiUpdateTimer(); // Stop frequent updates when paused/ended
+                // Ensure seekbar reflects final position when paused/ended
+                 if ((currentState === YT.PlayerState.PAUSED || currentState === YT.PlayerState.ENDED) && centralSeekBar && !centralSeekBar.matches(':active')) {
+                     const seekBarValue = Math.max(0, Math.min(currentOverlapTime, overlapDuration));
+                     centralSeekBar.value = seekBarValue;
+                 }
             }
         }
     } catch (e) {
@@ -435,14 +597,17 @@ function updateCentralControllerUI(player, state) {
     }
 }
 
+
 function startUiUpdateTimer() {
     if (uiUpdateInterval) return;
     stopUiUpdateTimer();
     console.log("Starting UI update timer.");
     uiUpdateInterval = setInterval(() => {
         if (player1 && isSyncGloballyEnabled && !centralControlsContainer.classList.contains('controls-disabled') && typeof player1.getCurrentTime === 'function') {
+             // Only call the update function, don't re-check conditions here
             updateCentralControllerUI(player1);
         } else {
+            // Stop if conditions are no longer met
             stopUiUpdateTimer();
         }
     }, UI_UPDATE_INTERVAL_MS);
@@ -470,20 +635,23 @@ function setupButtonListeners() {
     // Toggle View / Cinema Mode
     if (toggleViewBtn && mainContainer) {
         toggleViewBtn.onclick = () => {
+            const isEnteringCinemaMode = !mainContainer.classList.contains('controls-hidden');
             mainContainer.classList.toggle('controls-hidden'); // This class now means "Cinema Mode Active"
             document.body.classList.toggle('fullscreen-active'); // Used for body background/padding
-            const isCinemaMode = mainContainer.classList.contains('controls-hidden');
 
             // --- UPDATED TEXT/TITLE ---
-            if (isCinemaMode) {
+            if (isEnteringCinemaMode) {
                 toggleViewBtn.innerHTML = '<i class="fas fa-compress"></i> Exit Cinema Mode'; // Icon for exiting
                 toggleViewBtn.title = "Exit Cinema Mode";
                 toggleViewBtn.setAttribute('aria-pressed', 'true');
+                setSyncControlsVisibility(false); // *** Hide sync controls when entering cinema mode
                 console.log("Cinema Mode Entered.");
             } else {
                 toggleViewBtn.innerHTML = '<i class="fas fa-expand"></i> Cinema Mode'; // Icon for entering
                 toggleViewBtn.title = "Enter Cinema Mode";
                 toggleViewBtn.setAttribute('aria-pressed', 'false');
+                // *** Show sync controls again IF sync is enabled
+                setSyncControlsVisibility(isSyncGloballyEnabled && playersReady === 2);
                 console.log("Cinema Mode Exited.");
             }
             window.dispatchEvent(new Event('resize')); // Helps redraw players, especially on exit
@@ -501,6 +669,15 @@ function setupButtonListeners() {
         console.warn("Sync toggle checkbox not found.");
     }
 
+    // *** NEW: Apply Offset Button Listener ***
+    if (applyOffsetBtn) {
+        applyOffsetBtn.onclick = applyCustomOffset;
+        console.log("Apply Offset listener attached.");
+    } else {
+         console.warn("Apply Offset button not found.");
+    }
+
+
     // --- Central Controller Listeners ---
     if (centralPlayPauseBtn) {
         centralPlayPauseBtn.onclick = () => {
@@ -512,9 +689,28 @@ function setupButtonListeners() {
                     player1.pauseVideo();
                     player2.pauseVideo();
                 } else {
-                    console.log("Central Control: Playing both players.");
-                    player1.playVideo();
-                    player2.playVideo();
+                     // Before playing, ensure seek is within current overlap
+                    const currentTimeP1 = player1.getCurrentTime();
+                    const seekTimeP1 = Math.max(overlapStartP1, Math.min(currentTimeP1, overlapEndP1));
+                    // If current time was outside overlap, seek first
+                    if (Math.abs(currentTimeP1 - seekTimeP1) > 0.1) {
+                        const seekTimeP2 = seekTimeP1 + syncOffsetSeconds;
+                        console.log(`Central Control Play: Seeking to overlap start before playing. P1=${seekTimeP1.toFixed(3)}, P2=${seekTimeP2.toFixed(3)}`)
+                        player1.seekTo(seekTimeP1, true);
+                        player2.seekTo(Math.max(0, seekTimeP2), true);
+                        // Add slight delay before play after seek
+                        setTimeout(() => {
+                            if (player1 && player2 && isSyncGloballyEnabled) {
+                                console.log("Central Control: Playing both players (after seek adjustment).");
+                                player1.playVideo();
+                                player2.playVideo();
+                            }
+                        }, 150);
+                    } else {
+                        console.log("Central Control: Playing both players.");
+                        player1.playVideo();
+                        player2.playVideo();
+                    }
                 }
             } catch (e) {
                 console.error("Error handling central play/pause:", e);
@@ -526,45 +722,66 @@ function setupButtonListeners() {
     }
 
     if (centralSeekBar) {
+        let wasPlayingOnSeekStart = false;
+         centralSeekBar.addEventListener('mousedown', () => {
+             if (!player1 || !isSyncGloballyEnabled || overlapDuration <= 0) return;
+             try {
+                 wasPlayingOnSeekStart = player1.getPlayerState() === YT.PlayerState.PLAYING;
+                 if (wasPlayingOnSeekStart) {
+                     player1.pauseVideo(); // Pause P1 temporarily during seek drag
+                     // No need to pause P2 here, just P1 to stop its time advancing
+                     stopUiUpdateTimer(); // Stop UI updates while dragging
+                 }
+             } catch(e) { console.warn("Error on seek mousedown:", e); }
+         });
+
         centralSeekBar.addEventListener('input', () => {
             if (!player1 || !isSyncGloballyEnabled || overlapDuration <= 0) return;
+            // Only update the time display during drag, don't seek yet
             const seekOverlapTime = parseFloat(centralSeekBar.value);
             if (centralCurrentTime) {
                 centralCurrentTime.textContent = formatTime(seekOverlapTime);
             }
         });
+
         centralSeekBar.addEventListener('change', () => {
             if (!player1 || !player2 || !isSyncGloballyEnabled || overlapDuration <= 0) return;
             try {
                 const seekOverlapTime = parseFloat(centralSeekBar.value);
                 const seekTimeP1 = seekOverlapTime + overlapStartP1;
+                // Clamp final P1 seek time strictly within the overlap
                 const clampedSeekTimeP1 = Math.max(overlapStartP1, Math.min(seekTimeP1, overlapEndP1));
                 const seekTimeP2 = clampedSeekTimeP1 + syncOffsetSeconds;
-                console.log(`Central Control Seek: OverlapValue=${seekOverlapTime.toFixed(2)} -> Seeking P1 to ${clampedSeekTimeP1.toFixed(2)}s, P2 to ${seekTimeP2.toFixed(2)}s`);
-                const wasPlaying = player1.getPlayerState() === YT.PlayerState.PLAYING;
-                if (wasPlaying) {
-                    player1.pauseVideo();
-                    player2.pauseVideo();
-                }
+
+                console.log(`Central Control Seek: OverlapValue=${seekOverlapTime.toFixed(3)} -> Seeking P1 to ${clampedSeekTimeP1.toFixed(3)}s, P2 to ${seekTimeP2.toFixed(3)}s`);
+
                 player1.seekTo(clampedSeekTimeP1, true);
                 player2.seekTo(Math.max(0, seekTimeP2), true);
-                if (wasPlaying) {
+
+                 // If it was playing before seeking, resume playback after seek completes
+                if (wasPlayingOnSeekStart) {
                     setTimeout(() => {
                         if (player1 && player2 && isSyncGloballyEnabled) {
                             player1.playVideo();
-                            player2.playVideo();
+                            player2.playVideo(); // Explicitly play P2 as well
+                             startUiUpdateTimer(); // Restart UI timer
                         }
-                    }, 150);
+                    }, 150); // Delay to allow seek to register
                 } else {
-                    const finalOverlapTime = clampedSeekTimeP1 - overlapStartP1;
-                    if (centralCurrentTime) centralCurrentTime.textContent = formatTime(finalOverlapTime);
-                    if (centralSeekBar) centralSeekBar.value = finalOverlapTime;
+                     // If paused, update UI immediately after seek change
+                     // Recalculate final overlap time after clamping
+                     const finalOverlapTime = clampedSeekTimeP1 - overlapStartP1;
+                     if (centralCurrentTime) centralCurrentTime.textContent = formatTime(finalOverlapTime);
+                     if (centralSeekBar) centralSeekBar.value = finalOverlapTime; // Ensure slider snaps to clamped value
                 }
             } catch (e) {
                 console.error("Error handling central seek:", e);
-                if (player1 && player1.getPlayerState() === YT.PlayerState.PLAYING) {
-                    startUiUpdateTimer();
-                }
+                 // If error occurs, try to restart UI timer if it was playing
+                 if (wasPlayingOnSeekStart && player1 && player1.getPlayerState() === YT.PlayerState.PLAYING) {
+                     startUiUpdateTimer();
+                 }
+            } finally {
+                 wasPlayingOnSeekStart = false; // Reset flag
             }
         });
         console.log("Central seek bar listeners attached.");
@@ -595,31 +812,39 @@ function handleSyncToggleChange() {
     console.log("Sync toggle changed. Target state:", targetSyncStateEnabled ? "ENABLED" : "DISABLED");
 
     isSyncGloballyEnabled = targetSyncStateEnabled; // Update global var for status message logic NOW
-    updateSyncStatusMessage();
+    setSyncControlsVisibility(isSyncGloballyEnabled && playersReady === 2); // *** Update sync controls visibility
 
     if (!player1 || !player2 || playersReady < 2) {
         console.log("Sync toggle changed, but players not ready. Will apply state when ready.");
-        setCentralControlsEnabled(false);
+        setCentralControlsEnabled(false); // Ensure central controls are off
+        updateSyncStatusMessage();
         return;
     }
 
     console.log("Initiating player recreation due to sync toggle change...");
     isRecreating = true;
     statusElement.textContent = "Reconfiguring players...";
-    setCentralControlsEnabled(false);
-    stopDriftLogTimer();
+    setCentralControlsEnabled(false); // Disable central controls during recreation
+    setSyncControlsVisibility(false); // Hide sync controls during recreation
+    stopDriftLogTimer(); // Stop timers
     stopUiUpdateTimer();
 
     try { // Capture state
         tempStartTimeP1 = player1.getCurrentTime();
         if (targetSyncStateEnabled) {
+            // If enabling sync, calculate the offset based on current times BEFORE destroying
             const currentTimeP2 = player2.getCurrentTime();
             tempSyncOffset = currentTimeP2 - tempStartTimeP1;
-            console.log(`Sync Enabling: Captured state & calculated NEW offset: P1 Time=${tempStartTimeP1.toFixed(2)}, Offset=${tempSyncOffset.toFixed(2)}`);
+            console.log(`Sync Enabling: Captured state & calculated NEW offset: P1 Time=${tempStartTimeP1.toFixed(3)}, Offset=${tempSyncOffset.toFixed(3)}`);
         } else {
-            tempSyncOffset = 0;
-            console.log(`Sync Disabling: Captured state: P1 Time=${tempStartTimeP1.toFixed(2)}`);
+            // If disabling sync, the offset becomes irrelevant for recreation
+            tempSyncOffset = 0; // Will be ignored anyway, but set to 0 for clarity
+             syncOffsetSeconds = 0; // Reset the main offset variable as well when disabling
+             updateOffsetInputValue(); // Update input to show 0
+             if(driftDisplay) driftDisplay.textContent = "N/A"; // Clear drift display
+            console.log(`Sync Disabling: Captured state: P1 Time=${tempStartTimeP1.toFixed(3)}`);
         }
+        // Pause players before destroying
         player1.pauseVideo();
         player2.pauseVideo();
     } catch (e) {
@@ -628,24 +853,27 @@ function handleSyncToggleChange() {
         tempSyncOffset = 0;
     }
 
-    const newControlsValue = targetSyncStateEnabled ? 0 : 1; // 0=Hidden, 1=Shown
+    const newControlsValue = targetSyncStateEnabled ? 0 : 1; // 0=Hidden YT Controls, 1=Shown YT Controls
     console.log(`Target native controls value: ${newControlsValue}`);
 
-    setTimeout(() => { // Destroy and recreate after pause registers
-        destroyPlayers();
-        isRecreating = true;
-        playersReady = 0;
+    // Use setTimeout to allow pause command to process before destroying
+    setTimeout(() => {
+        destroyPlayers(); // Destroy players
+        isRecreating = true; // Ensure flag is still set
+        playersReady = 0; // Reset ready count
         console.log("Recreating players now...");
         if (storedVideoId1 && storedVideoId2) {
+            // Recreate with stored IDs and new controls value
             createPlayer('player1', storedVideoId1, newControlsValue);
             createPlayer('player2', storedVideoId2, newControlsValue);
+             // onPlayerReady will handle the rest (seeking, enabling controls, updating UI etc.)
         } else {
             console.error("Cannot recreate players: Stored video IDs are missing.");
             statusElement.textContent = "Error: Cannot reconfigure players.";
-            isRecreating = false;
+            isRecreating = false; // Reset flag on error
             if (loadBtn) loadBtn.disabled = false;
         }
-    }, 150);
+    }, 150); // Short delay
 }
 
 
@@ -655,17 +883,30 @@ function handleSkip(secondsToSkip) {
     try {
         const currentTimeP1 = player1.getCurrentTime();
         const targetTimeP1 = currentTimeP1 + secondsToSkip;
+
+        // Clamp the target P1 time within the valid overlap range
         const seekTimeP1 = Math.max(overlapStartP1, Math.min(targetTimeP1, overlapEndP1));
+
+        // Calculate the corresponding P2 time using the current offset
         const seekTimeP2 = seekTimeP1 + syncOffsetSeconds;
-        console.log(`Central Control Skip: ${secondsToSkip}s -> Clamped Seek P1 to ${seekTimeP1.toFixed(2)}s, P2 to ${seekTimeP2.toFixed(2)}s`);
+
+        console.log(`Central Control Skip: ${secondsToSkip}s -> Clamped Seek P1 to ${seekTimeP1.toFixed(3)}s, P2 to ${seekTimeP2.toFixed(3)}s`);
+
+        // Seek both players
         player1.seekTo(seekTimeP1, true);
-        player2.seekTo(Math.max(0, seekTimeP2), true);
+        player2.seekTo(Math.max(0, seekTimeP2), true); // Ensure P2 doesn't go below 0
+
+        // Update the UI immediately to reflect the skip
         const seekOverlapTime = seekTimeP1 - overlapStartP1;
         if (centralSeekBar) centralSeekBar.value = seekOverlapTime;
         if (centralCurrentTime) centralCurrentTime.textContent = formatTime(seekOverlapTime);
+
+        // If paused, trigger a manual UI update
         if (player1.getPlayerState() !== YT.PlayerState.PLAYING) {
+            // Use setTimeout to ensure the UI update happens after the seek likely registers
             setTimeout(() => updateCentralControllerUI(player1), 50);
         }
+        // If playing, the regular UI timer will catch up.
     } catch (e) {
         console.error(`Error handling skip (${secondsToSkip}s):`, e);
     }
@@ -673,32 +914,54 @@ function handleSkip(secondsToSkip) {
 
 // --- Drift Monitoring Logic ---
 function logDrift() {
-    if (isRecreating || playersReady < 2 || !player1 || !player2 || typeof player1.getCurrentTime !== 'function' || typeof player2.getCurrentTime !== 'function') {
-        return;
+    // Only calculate and display if sync is globally enabled and players are ready
+    if (!isSyncGloballyEnabled || isRecreating || playersReady < 2 || !player1 || !player2 || typeof player1.getCurrentTime !== 'function' || typeof player2.getCurrentTime !== 'function') {
+        if (driftDisplay && driftDisplay.textContent !== "N/A") {
+             driftDisplay.textContent = "N/A"; // Clear display if conditions not met
+        }
+        return; // Don't proceed if sync off or players not ready
     }
+
     try {
         const time1 = player1.getCurrentTime();
         const time2 = player2.getCurrentTime();
         const actualOffset = time2 - time1;
-        const drift = actualOffset - syncOffsetSeconds;
-        console.log(`Drift Monitor | P1: ${time1.toFixed(3)}s | P2: ${time2.toFixed(3)}s | Actual Offset: ${actualOffset.toFixed(3)}s | Expected Offset: ${syncOffsetSeconds.toFixed(3)}s | Drift: ${drift.toFixed(3)}s`);
+        const drift = actualOffset - syncOffsetSeconds; // Drift is difference from TARGET offset
+
+        // Log to console regardless
+        console.log(`Drift Monitor | P1: ${time1.toFixed(3)}s | P2: ${time2.toFixed(3)}s | Actual Offset: ${actualOffset.toFixed(3)}s | Target Offset: ${syncOffsetSeconds.toFixed(3)}s | Drift: ${drift.toFixed(3)}s`);
+
+        // Update the UI element if it exists
+        if (driftDisplay) {
+            driftDisplay.textContent = drift.toFixed(3) + "s";
+        }
+
     } catch (e) {
-        console.warn("Error during drift logging:", e);
+        console.warn("Error during drift logging/updating:", e);
+        if (driftDisplay) {
+            driftDisplay.textContent = "Error"; // Show error in display
+        }
     }
 }
 
+
 function startDriftLogTimer() {
-    if (driftLogInterval) return;
-    stopDriftLogTimer();
-    console.log(`Starting drift monitor log timer (Interval: ${DRIFT_LOG_INTERVAL_MS}ms)`);
+    if (driftLogInterval) return; // Already running
+    stopDriftLogTimer(); // Ensure any previous timer is stopped
+    console.log(`Starting drift monitor log/update timer (Interval: ${DRIFT_LOG_INTERVAL_MS}ms)`);
+    // Run immediately once
+    logDrift();
+    // Then run on interval
     driftLogInterval = setInterval(logDrift, DRIFT_LOG_INTERVAL_MS);
 }
 
 function stopDriftLogTimer() {
     if (driftLogInterval) {
-        console.log("Stopping drift monitor log timer.");
+        console.log("Stopping drift monitor log/update timer.");
         clearInterval(driftLogInterval);
         driftLogInterval = null;
+        // Optionally clear drift display when timer stops? Maybe better to leave last value.
+        // if (driftDisplay) driftDisplay.textContent = "N/A";
     }
 }
 
@@ -710,30 +973,40 @@ function updateSyncStatusMessage() {
         statusElement.textContent = "Reconfiguring players...";
         return;
     }
-    if (playersReady < 2 && (statusElement.textContent.includes("Loading") || statusElement.textContent.includes("Error"))) {
+    // Avoid overwriting loading/error messages until players are ready
+    if (playersReady < 2 && (statusElement.textContent.includes("Loading") || statusElement.textContent.includes("Waiting") || statusElement.textContent.includes("Error"))) {
         return;
     }
+
     const currentSyncEnabledState = syncToggleCheckbox ? syncToggleCheckbox.checked : isSyncGloballyEnabled;
+
     if (currentSyncEnabledState) {
         let offsetMsg = "";
-        if (overlapDuration > 0 && Math.abs(syncOffsetSeconds) > 0.1) {
+        // Show offset in status only if it's significantly non-zero
+        if (playersReady === 2 && Math.abs(syncOffsetSeconds) > 0.01) {
             const sign = syncOffsetSeconds > 0 ? "+" : "";
             offsetMsg = ` (Offset: P2 ${sign}${syncOffsetSeconds.toFixed(2)}s)`;
         }
+
         const controlsActive = centralControlsContainer && !centralControlsContainer.classList.contains('controls-disabled');
+
         if (playersReady < 2) {
-            statusElement.textContent = `Sync Enabled: Waiting for players...${offsetMsg}`;
-        } else if (overlapDuration <= 0 && player1 && player2) {
+            statusElement.textContent = `Sync Enabled: Waiting for players...`;
+        } else if (overlapDuration <= 0) {
+            // Check players exist before saying no overlap
             statusElement.textContent = `Sync Enabled: No overlapping playtime detected.${offsetMsg}`;
-        } // Check players exist before saying no overlap
-        else {
-            statusElement.textContent = controlsActive ? `Sync Enabled: Central controls active.${offsetMsg}` : `Sync Enabled: Initializing...${offsetMsg}`;
+        } else if (controlsActive) {
+            statusElement.textContent = `Sync Enabled: Central controls active.${offsetMsg}`;
+        } else {
+             // Controls might be inactive briefly during init or if overlap became 0
+            statusElement.textContent = `Sync Enabled: Ready.${offsetMsg}`;
         }
     } else {
+        // Sync Disabled
         if (playersReady < 2) {
             statusElement.textContent = 'Sync Disabled: Waiting for players...';
         } else {
-            statusElement.textContent = 'Sync Disabled: Use individual player controls. Re-enable sync to use central controls and set offset.';
+            statusElement.textContent = 'Sync Disabled: Use individual player controls. Enable sync to use central controls or set offset.';
         }
     }
 }
@@ -743,7 +1016,7 @@ function updateSyncStatusMessage() {
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM Content Loaded. Setting up initial state and listeners.");
     if (loadBtn) {
-        loadBtn.disabled = true;
+        loadBtn.disabled = true; // Disabled until API loads
     }
     if (mainContainer) mainContainer.classList.remove('controls-hidden');
     document.body.classList.remove('fullscreen-active');
@@ -752,13 +1025,17 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleViewBtn.title = "Enter Cinema Mode";
         toggleViewBtn.setAttribute('aria-pressed', 'false');
     }
+
     isSyncGloballyEnabled = syncToggleCheckbox ? syncToggleCheckbox.checked : true;
     syncOffsetSeconds = 0;
     overlapStartP1 = 0;
     overlapEndP1 = Infinity;
     overlapDuration = 0;
-    setCentralControlsEnabled(false);
+
+    setCentralControlsEnabled(false); // Initially disabled
+    setSyncControlsVisibility(false); // Initially hidden
+
     setupButtonListeners();
-    updateSyncStatusMessage();
+    updateSyncStatusMessage(); // Set initial status message
 });
 console.log("Initial script execution finished. Waiting for DOMContentLoaded and YouTube API Ready...");

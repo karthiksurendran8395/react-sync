@@ -45,6 +45,27 @@
             <p class="input-hint">Enter a YouTube Video URL or just the Video ID.</p>
          </section>
          <p class="status" id="status">Loading API...</p>
+
+         <!-- ======================================= -->
+         <!-- == NEW: Sync Controls Section == -->
+         <!-- ======================================= -->
+         <section id="syncControlsSection" class="sync-controls-section">
+             <h3>Sync Controls</h3>
+             <div class="sync-control-group">
+                 <label for="offsetInput">Offset (P2 - P1, seconds):</label>
+                 <div class="input-with-button">
+                    <input type="number" id="offsetInput" step="0.01" placeholder="e.g., 1.5">
+                    <button id="applyOffsetBtn">Apply Offset</button>
+                 </div>
+             </div>
+             <div class="sync-control-group">
+                 <label for="driftDisplay">Current Drift:</label>
+                 <span id="driftDisplay" class="read-only-display">N/A</span>
+             </div>
+         </section>
+         <!-- ======================================= -->
+         <!-- ======================================= -->
+
          <!-- ======================================= -->
          <!-- == Central Playback Controls UI == -->
          <!-- ======================================= -->

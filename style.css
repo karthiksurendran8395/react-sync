@@ -251,6 +251,127 @@
      opacity: 1;
      visibility: visible;
 }
+
+/* --- START: Sync Controls Section Styles --- */
+.sync-controls-section {
+    display: flex; /* Use flex for internal layout */
+    flex-direction: column; /* Stack items vertically */
+    align-items: center; /* Center items horizontally */
+    gap: 15px;
+    width: 100%;
+    max-width: 600px; /* Limit width */
+    margin-bottom: 20px;
+    padding: 15px 20px;
+    background-color: #f0f0f0; /* Slightly different background */
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    /* Hidden by default using height/opacity for transition */
+    opacity: 0;
+    visibility: hidden;
+    height: 0;
+    overflow: hidden;
+    transition: opacity 0.3s ease, visibility 0s linear 0.3s, height 0.3s ease, padding 0.3s ease, margin 0.3s ease, border 0.3s ease;
+}
+
+.sync-controls-section.sync-controls-visible {
+    opacity: 1;
+    visibility: visible;
+    height: auto;
+    /* Restore padding/margin when visible */
+    padding: 15px 20px;
+    margin-bottom: 20px;
+}
+
+.sync-controls-section h3 {
+    font-family: var(--font-headings);
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: var(--dark-gray);
+    margin: 0 0 10px 0; /* Add some bottom margin */
+    width: 100%;
+    text-align: center;
+}
+
+.sync-control-group {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping on small screens */
+    align-items: center;
+    gap: 10px; /* Gap between label and input/display */
+    width: 100%;
+    justify-content: center; /* Center items in the group */
+}
+
+.sync-control-group label {
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+    flex-basis: 180px; /* Give label some fixed width */
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.sync-control-group .input-with-button {
+    display: flex;
+    flex-grow: 1;
+    gap: 10px;
+    min-width: 220px; /* Ensure input + button have enough space */
+}
+
+
+.sync-control-group input[type="number"] {
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    flex-grow: 1; /* Allow input to take available space */
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    height: 38px;
+    min-width: 100px; /* Minimum width for the input */
+}
+
+.sync-control-group input[type="number"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.sync-control-group button#applyOffsetBtn {
+    padding: 8px 15px;
+    background-color: var(--secondary-color);
+    color: var(--white);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    height: 38px;
+    flex-shrink: 0;
+}
+
+.sync-control-group button#applyOffsetBtn:hover {
+    background-color: var(--dark-gray);
+    transform: translateY(-1px);
+}
+
+.sync-control-group .read-only-display {
+    font-size: 0.95rem;
+    font-family: monospace; /* Good for numbers */
+    color: var(--dark-gray);
+    background-color: #e9ecef; /* Visually distinct */
+    padding: 8px 12px;
+    border-radius: 6px;
+    min-width: 80px; /* Give it some base width */
+    text-align: center;
+    height: 38px;
+    line-height: 22px; /* Vertically center text approx */
+    border: 1px solid var(--border-color);
+    flex-grow: 1; /* Allow to grow slightly */
+    max-width: 150px; /* But not too much */
+}
+/* --- END: Sync Controls Section Styles --- */
+
+
 /* --- Central Controls Styles --- */
  .central-controls-container {
      width: 100%;
@@ -449,10 +570,13 @@
      opacity: 1;
      overflow: hidden;
 }
-/* Hide header, INPUT controls, status, video titles smoothly */
- .main-container.controls-hidden header, .main-container.controls-hidden .controls-section, 
-/* Hide input section */
- .main-container.controls-hidden .status, .main-container.controls-hidden .video-wrapper h2 {
+/* Hide header, INPUT controls, status, video titles AND SYNC CONTROLS smoothly */
+ .main-container.controls-hidden header,
+ .main-container.controls-hidden .controls-section,
+ .main-container.controls-hidden .status,
+ .main-container.controls-hidden .video-wrapper h2,
+ .main-container.controls-hidden #syncControlsSection /* ADDED: Hide sync controls in cinema mode */
+ {
      opacity: 0;
      visibility: hidden;
      height: 0;
@@ -591,6 +715,35 @@
          margin-top: 15px;
          order: 3;
     }
+
+    /* Normal Sync Controls */
+    .sync-controls-section:not(.main-container.controls-hidden #syncControlsSection) {
+        padding: 10px 15px;
+        gap: 12px;
+    }
+    .sync-control-group:not(.main-container.controls-hidden .sync-control-group) {
+        gap: 8px;
+        flex-direction: column; /* Stack label and input/button vertically */
+        align-items: flex-start; /* Align items to the start */
+    }
+    .sync-control-group label:not(.main-container.controls-hidden .sync-control-group label) {
+        flex-basis: auto; /* Reset basis */
+        text-align: left; /* Align label left */
+        margin-bottom: 3px;
+        width: 100%; /* Label takes full width */
+    }
+    .sync-control-group .input-with-button:not(.main-container.controls-hidden .input-with-button) {
+        width: 100%; /* Make input+button container full width */
+        min-width: 0;
+    }
+    .sync-control-group .read-only-display:not(.main-container.controls-hidden .read-only-display) {
+        width: 100%; /* Make display full width */
+        max-width: none; /* Allow it to be full width */
+        text-align: left;
+        padding-left: 12px;
+    }
+
+
     /* Normal Central Controls */
      .central-controls-container:not(.main-container.controls-hidden #centralControls):not(.controls-disabled) {
          padding: 10px 15px;
@@ -698,6 +851,20 @@
      .video-wrapper h2:not(.main-container.controls-hidden h2) {
          font-size: 1.1rem;
     }
+
+    /* Normal Sync Controls Mobile */
+    .sync-control-group input[type="number"]:not(.main-container.controls-hidden input[type="number"]),
+    .sync-control-group button#applyOffsetBtn:not(.main-container.controls-hidden button#applyOffsetBtn),
+    .sync-control-group .read-only-display:not(.main-container.controls-hidden .read-only-display) {
+        font-size: 0.9rem; /* Slightly smaller text */
+        height: 36px; /* Slightly smaller height */
+        padding: 6px 8px;
+    }
+    .sync-control-group .read-only-display:not(.main-container.controls-hidden .read-only-display) {
+         line-height: 24px; /* Adjust line height */
+    }
+
+
     /* Normal Central Controls Mobile */
      .central-controls-buttons button:not(.main-container.controls-hidden .central-controls-buttons button) {
          font-size: 1.2rem;
